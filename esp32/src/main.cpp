@@ -1,12 +1,4 @@
-/*************************************************** 
-  This is an example for the SHT31-D Humidity & Temp Sensor
 
-  Designed specifically to work with the SHT31-D sensor from Adafruit
-  ----> https://www.adafruit.com/products/2857
-
-  These sensors use I2C to communicate, 2 pins are required to  
-  interface
- ****************************************************/
  
 #include <Arduino.h>
 // #include <FirebaseJson.h>
@@ -15,6 +7,7 @@
 #include <Wire.h>
 #include <SPI.h>
 #include "Adafruit_SHT31.h"
+#include "Adafruit_LTR329_LTR303.h"
 #include "credentials.h"
 
 
@@ -23,32 +16,52 @@ FirebaseData fbdo;
 FirebaseAuth auth;
 FirebaseConfig config;
 
-bool enableHeater = false;
-uint8_t loopCnt = 0;
+// Remove?
+// bool enableHeater = false;
+// uint8_t loopCnt = 0;
 
+
+// SHT31 temperature and humidity sensor
 Adafruit_SHT31 sht31 = Adafruit_SHT31();
+
+// LTR-329 light sensor
+Adafruit_LTR329 ltr = Adafruit_LTR329();
 
 void setup() {
   Serial.begin(115200);
 
-  while (!Serial)
-    delay(10);     // will pause Zero, Leonardo, etc until serial console opens
-
-  Serial.println("SHT31 test");
-  if (! sht31.begin(0x44)) {   // Set to 0x45 for alternate i2c addr
-    Serial.println("Couldn't find SHT31");
-    while (1) delay(1);
+  // Initialize Serial (for older boards that need the while)
+  while (!Serial) {
+    delay(10);
   }
 
-  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  // Initialize SHT31
+  Serial.println("Initializing SHT31...");
+  if (!sht31.begin(0x44)) { // Use 0x45 if your sensor has that I2C address
+    Serial.println("Couldn't find SHT31 sensor!");
+    while (1) { delay(1); }
+  }
 
-  // Wait for connection
+  // Initialize LTR-329
+  Serial.println("Initializing LTR-329...");
+  if (!ltr.begin()) {
+    Serial.println("Couldn't find LTR-329 sensor!");
+    while (1) { delay(10); }
+  }
+  Serial.println("Found LTR-329 sensor!");
+
+
+  // Connect to wifi
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  Serial.print("Connecting to Wi-Fi");
+
   while (WiFi.status() != WL_CONNECTED) {
     delay(300);
     Serial.print(".");
   }
   Serial.println("Connected to Wi-Fi");
 
+  // Configure and begin firebase
   config.api_key = FIREBASE_API_KEY;
   config.database_url = FIREBASE_DB_URL;
 
@@ -65,6 +78,7 @@ void setup() {
 
 
 void loop() {
+  // Read SHT31
   float t = sht31.readTemperature();
   float h = sht31.readHumidity();
 
@@ -78,6 +92,33 @@ void loop() {
     Serial.print("Hum. % = "); Serial.println(h);
   } else { 
     Serial.println("Failed to read humidity");
+  }
+
+
+  // Read LTR-329
+  uint16_t visible_plus_ir = 0;
+  uint16_t infrared = 0;
+  int visible_only = 0;
+
+  if (ltr.newDataAvailable()) {
+    bool validData = ltr.readBothChannels(visible_plus_ir, infrared);
+    if (validData) {
+      // Subtract IR from total to approximate visible light
+      visible_only = (int)visible_plus_ir - (int)infrared;
+      // Clamp to zero to avoid negative results if IR reading is higher
+      if (visible_only < 0) visible_only = 0;
+
+      Serial.print("LTR-329 CH0 (Vis+IR): ");
+      Serial.print(visible_plus_ir);
+      Serial.print("\tCH1 (IR): ");
+      Serial.print(infrared);
+      Serial.print("\tDerived Visible: ");
+      Serial.println(visible_only);
+    } else {
+      Serial.println("Failed to read data from LTR-329");
+    }
+  } else {
+    Serial.println("LTR-329 data not yet available...");
   }
 
   // Write temperature to the database (float)
@@ -96,6 +137,14 @@ void loop() {
     Serial.println(fbdo.errorReason());
   }
 
-  // Wait 10 seconds before next reading
-  delay(10000);
+  // Write light values to the database
+  if (Firebase.RTDB.setInt(&fbdo, "/greenhouse/sensor1/light/visible", visible_only)) {
+    Serial.println("Visible light sent to Firebase");
+  } else {
+    Serial.print("Failed to send visible light: ");
+    Serial.println(fbdo.errorReason());
+  }
+
+  // Wait 60 seconds before next reading
+  delay(60000);
 }
