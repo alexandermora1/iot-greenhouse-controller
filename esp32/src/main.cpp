@@ -78,8 +78,11 @@ void setup() {
 
 
 void loop() {
-  // Read SHT31
-  float t = sht31.readTemperature();
+  // Read SHT31 and offset to account for incorrect temperature value
+  float measuredTemp = sht31.readTemperature();
+  float calibrationOffset = -4.0; //Subtract 4 degrees
+  float t = measuredTemp + calibrationOffset;
+
   float h = sht31.readHumidity();
 
   if (! isnan(t)) {  // check if 'is not a number'
@@ -148,3 +151,4 @@ void loop() {
   // Wait 60 seconds before next reading
   delay(60000);
 }
+
