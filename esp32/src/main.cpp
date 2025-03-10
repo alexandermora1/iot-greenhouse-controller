@@ -12,13 +12,16 @@
 
 
 // Token generation process info
-FirebaseData fbdo;
+FirebaseData fbdata;
 FirebaseAuth auth;
 FirebaseConfig config;
+FirebaseJson json;
 
-// Remove?
-// bool enableHeater = false;
-// uint8_t loopCnt = 0;
+
+// NTP settings
+const char* ntpServer = "no.pool.ntp.org"; // Norwegian NTP server
+const long  gmtOffset_sec = 0;          // adjust for your time zone (e.g., 3600 for GMT+1)
+const int   daylightOffset_sec = 0;     // adjust if you observe daylight savings
 
 
 // SHT31 temperature and humidity sensor
@@ -61,11 +64,24 @@ void setup() {
   }
   Serial.println("Connected to Wi-Fi");
 
+
+  // Configure NTP
+  configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
+
+  // Wait for time to be set
+  Serial.println("Waiting for NTP time sync...");
+  while (time(nullptr) < 100000) { // Arbitrary check: time(nullptr) returns 0 or low value if time not set
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("\nTime synced!");
+
+
   // Configure and begin firebase
   config.api_key = FIREBASE_API_KEY;
   config.database_url = FIREBASE_DB_URL;
 
-  // Sign up or sign in
+  // TODO - Sign up or sign in
   if (Firebase.signUp(&config, &auth, "", "")) {
     Serial.println("Firebase SignUp successful");
   } else {
@@ -78,7 +94,13 @@ void setup() {
 
 
 void loop() {
-  // Read SHT31 and offset to account for incorrect temperature value
+  // Get current epoch time
+  time_t now = time(nullptr);
+  Serial.print("Epoch time: ");
+  Serial.println((long)now);
+
+
+  // Read SHT31 and offset incorrect temperature value
   float measuredTemp = sht31.readTemperature();
   float calibrationOffset = -4.0; //Subtract 4 degrees
   float t = measuredTemp + calibrationOffset;
@@ -124,31 +146,58 @@ void loop() {
     Serial.println("LTR-329 data not yet available...");
   }
 
-  // Write temperature to the database (float)
-  if (Firebase.RTDB.setFloat(&fbdo, "/greenhouse/sensor1/temperature", t)) {
+  // Current sensor values for the main page of the app
+  // Overwrites the "/current..." paths each time a sensor value is read
+  // ------------------------------------------------------------------
+  // Temperature
+  if (Firebase.RTDB.setFloat(&fbdata, "/greenhouse/sensor1/current/temperature", t)) {
     Serial.println("Temperature data sent successfully to Firebase.");
   } else {
     Serial.print("Failed to send temperature data: ");
-    Serial.println(fbdo.errorReason());
+    Serial.println(fbdata.errorReason());
   }
 
-  // Write humidity to the database (float)
-  if (Firebase.RTDB.setFloat(&fbdo, "/greenhouse/sensor1/humidity", h)) {
+  // Humidity
+  if (Firebase.RTDB.setFloat(&fbdata, "/greenhouse/sensor1/current/humidity", h)) {
     Serial.println("Humidity data sent successfully to Firebase.");
   } else {
     Serial.print("Failed to send humidity data: ");
-    Serial.println(fbdo.errorReason());
+    Serial.println(fbdata.errorReason());
   }
 
-  // Write light values to the database
-  if (Firebase.RTDB.setInt(&fbdo, "/greenhouse/sensor1/light/visible", visible_only)) {
+  // Light
+  if (Firebase.RTDB.setInt(&fbdata, "/greenhouse/sensor1/current/light", visible_only)) {
     Serial.println("Visible light sent to Firebase");
   } else {
     Serial.print("Failed to send visible light: ");
-    Serial.println(fbdo.errorReason());
+    Serial.println(fbdata.errorReason());
   }
 
-  // Wait 60 seconds before next reading
-  delay(60000);
+
+  // Historical sensor values for the deatil views of the app
+  // Builds a JSON object for the historical sensor readings
+  // The path is "/greenhouse/sensor1/history"
+  // Firebase will generate a unique key for each push so a time series can be retrieved on the frontend
+  // ------------------------------------------------------------------
+  {
+  json.clear();
+  json.set("temperature", t);
+  json.set("humidity", h);
+  json.set("light", visible_only);
+  json.set("timestamp", (long)now);
+
+  String historyPath = "/greenhouse/sensor1/history";
+
+  if (Firebase.RTDB.pushJSON(&fbdata, historyPath, &json)) {
+    Serial.println("Historical sensor data pushed to firebase.");
+  } else {
+    Serial.print("Failed to push historical data: ");
+    Serial.println(fbdata.errorReason());
+    }
+  }
+
+
+  // Wait 10 seconds before next reading. Final interval will probably be 15 minutes.
+  delay(10000);
 }
 
