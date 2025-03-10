@@ -150,7 +150,7 @@ void loop() {
   // Overwrites the "/current..." paths each time a sensor value is read
   // ------------------------------------------------------------------
   // Temperature
-  if (Firebase.RTDB.setFloat(&fbdata, "/greenhouse/sensor1/current/temperature", t)) {
+  if (Firebase.RTDB.setFloat(&fbdata, "/greenhouseCurrent/temperature", t)) {
     Serial.println("Temperature data sent successfully to Firebase.");
   } else {
     Serial.print("Failed to send temperature data: ");
@@ -158,7 +158,7 @@ void loop() {
   }
 
   // Humidity
-  if (Firebase.RTDB.setFloat(&fbdata, "/greenhouse/sensor1/current/humidity", h)) {
+  if (Firebase.RTDB.setFloat(&fbdata, "/greenhouseCurrent/humidity", h)) {
     Serial.println("Humidity data sent successfully to Firebase.");
   } else {
     Serial.print("Failed to send humidity data: ");
@@ -166,7 +166,7 @@ void loop() {
   }
 
   // Light
-  if (Firebase.RTDB.setInt(&fbdata, "/greenhouse/sensor1/current/light", visible_only)) {
+  if (Firebase.RTDB.setInt(&fbdata, "/greenhouseCurrent/light", visible_only)) {
     Serial.println("Visible light sent to Firebase");
   } else {
     Serial.print("Failed to send visible light: ");
@@ -186,7 +186,7 @@ void loop() {
   json.set("light", visible_only);
   json.set("timestamp", (long)now);
 
-  String historyPath = "/greenhouse/sensor1/history";
+  String historyPath = "/greenhouseHistory";
 
   if (Firebase.RTDB.pushJSON(&fbdata, historyPath, &json)) {
     Serial.println("Historical sensor data pushed to firebase.");
