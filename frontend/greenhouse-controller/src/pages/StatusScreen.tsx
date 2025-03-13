@@ -1,14 +1,20 @@
 import React, { useEffect, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Card, Text, Avatar } from "react-native-paper";
+import { Card, Text, Avatar, useTheme } from "react-native-paper";
 import { ScrollView, View } from "react-native";
 import { database } from "../firebase/firebase";
 import { ref, onValue, DataSnapshot } from "firebase/database";
+import { useNavigation, NavigationProp } from "@react-navigation/native";
+import { RootStackParamList } from "../routes/Routes";
+
 
 export default function StatusScreen() {
   const [temperature, setTemperature] = useState<number | null>(null);
   const [humidity, setHumidity] = useState<number | null>(null);
   const [light, setLight] = useState<number | null>(null);
+  
+  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
+  // const { colors } = useTheme();
 
   useEffect(() => {
     const currentRef = ref(database, '/greenhouseCurrent');
@@ -35,19 +41,19 @@ export default function StatusScreen() {
       </View>
 
       <View style={{ flexDirection: "row", justifyContent: "space-between", flex: 1 }}>
-        <Card style={{ flex: 1, marginHorizontal: 4 }}>
+        <Card style={{ flex: 1, marginHorizontal: 4 }} onPress={() => navigation.navigate("Temperature")}>
           <Card.Content>
             <Text variant="bodyMedium">Temperature:</Text>
             <Text variant="bodyMedium">{temperature !== null ? `${temperature.toFixed(1)} °C` : 'N/A'}</Text>
           </Card.Content>
         </Card>
-        <Card style={{ flex: 1, marginHorizontal: 4 }}>
+        <Card style={{ flex: 1, marginHorizontal: 4 }} onPress={() => navigation.navigate("Humidity")}>
           <Card.Content>
             <Text variant="bodyMedium">Humidity:</Text>
             <Text variant="bodyMedium">{humidity !== null ? `${humidity.toFixed(1)} %` : 'N/A'}</Text>
           </Card.Content>
         </Card>
-        <Card style={{ flex: 1, marginHorizontal: 4 }}>
+        <Card style={{ flex: 1, marginHorizontal: 4 }} onPress={() => navigation.navigate("Light")}>
           <Card.Content>
             <Text variant="bodyMedium">Light:</Text>
             <Text variant="bodyMedium">{light !== null ? light : 'N/A'}</Text>
