@@ -2,7 +2,7 @@
 
 Project for ACIT4015 Internet of Things at OsloMet.
 
-This repository contains a prototype system designed to help hobby gardeners monitor and maintain optimal conditions in a perspnal greenhouse. It integrates sensor data collection on an ESP32 microcontroller with a cross platform mobile application built using React Native. The mobile app displays real-time and historical environmental data, enabling users to keep track of temperature, humidity, and light levels in their greenhouse.
+This repository contains a prototype system designed to help hobby gardeners monitor and maintain optimal conditions in a personal greenhouse. It integrates sensor data collection on an ESP32 microcontroller with a cross platform mobile application built using React Native. The mobile app displays real-time and historical environmental data, enabling users to keep track of temperature, humidity, and light levels in their greenhouse.
 
 The project runs from March 3 to April 25, 2025.  
 <br/>
@@ -14,11 +14,11 @@ This project is developed as part of the ACIT4015 Internet of Things course, whe
 ## What Is It?
 The IoT Greenhouse Controller aims to:
 
-Collect real-time data on temperature, humidity, and light using an ESP32-S3-MINI-1 microcontroller with a SHT-31 sensor for temperature/humidity and an LTR329ALS sensor for light.
-Send the collected data to a Firebase Realtime Database for storage and synchronization.
-Provide a React Native mobile application (built with Expo) to display both real-time and historical sensor readings.
-Simulate control actions by sending push notifications (via Pushsafer) when certain thresholds (e.g., low temperature, high humidity) are crossed.
-Although the prototype does not directly control any physical devices, it simulates actions such as turning lights on/off or adjusting ventilation, illustrating how full automation could be integrated in a future version.  
+- Collect real-time data on temperature, humidity, and light using an ESP32-S3-MINI-1 microcontroller with a SHT-31 sensor for temperature/humidity and an LTR329ALS sensor for light.
+- Send the collected data to a Firebase Realtime Database for storage and synchronization.
+- Provide a React Native mobile application (built with Expo) to display both real-time and historical sensor readings.
+- Simulate control actions by sending push notifications (via Pushsafer) when certain thresholds (e.g., low temperature, high humidity) are crossed.
+- Although the prototype does not directly control any physical devices, it simulates actions such as turning lights on/off or adjusting ventilation, illustrating how full automation could be integrated in a future version.  
 <br/>
 
 ## Features
