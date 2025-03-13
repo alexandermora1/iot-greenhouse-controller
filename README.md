@@ -8,7 +8,7 @@ The project runs from March 3 to April 25, 2025.
 <br/>
 
 ## Project Overview
-This project was developed as part of the ACIT4015 Internet of Things course, where students are encouraged to propose and implement an IoT project aligned with their academic background. My study program is Universal Design of ICT, so a key focus is on accessibility and inclusive design in the mobile application interface.  
+This project is developed as part of the ACIT4015 Internet of Things course, where students are encouraged to propose and implement an IoT project aligned with their masters study program. My study program is Universal Design of ICT, so a key focus is on accessibility and inclusive design in the mobile application interface.  
 <br/>
 
 ## What Is It?
