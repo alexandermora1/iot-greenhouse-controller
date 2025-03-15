@@ -14,7 +14,6 @@ export default function StatusScreen() {
   const [light, setLight] = useState<number | null>(null);
   
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
-  // const { colors } = useTheme();
 
   useEffect(() => {
     const currentRef = ref(database, '/greenhouseCurrent');
