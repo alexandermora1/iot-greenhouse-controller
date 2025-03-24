@@ -1,84 +1,43 @@
-import { onChildAdded, ref } from "firebase/database";
+import { DataSnapshot, limitToLast, onChildAdded, onValue, query, ref } from "firebase/database";
 import React, { useEffect } from "react";
 import { Dimensions, View } from "react-native";
 import { Text } from "react-native-paper";
 import { database } from "../firebase/firebase";
 import { LineChart } from "react-native-chart-kit";
+import { useHistoricalData } from "../hooks/HistoricalData";
 
 
 const chartConfig = {
-  backgroundGradientFrom: "#1E2923",
-  backgroundGradientFromOpacity: 0,
-  backgroundGradientTo: "#08130D",
-  backgroundGradientToOpacity: 0.5,
-  color: (opacity = 1) => `rgba(26, 255, 146, ${opacity})`,
-  strokeWidth: 2, // optional, default 3
-  barPercentage: 0.5,
+  backgroundGradientFrom: "#014c52",
+  backgroundGradientFromOpacity: 0.6,
+  backgroundGradientTo: "#007982",
+  backgroundGradientToOpacity: 0.6,
+  color: (opacity = 1) => `rgba(0, 238, 255, ${opacity})`,
+  strokeWidth: 3, // optional, default 3
+  barPercentage: 1,
   useShadowColorFromDataset: false // optional
 };
 
 
-export default function TempHistory() {
-
-
-
-  // useEffect(() => {
-  //   const historyRef = ref(database, "/greenhouseHistory");
-  //   onChildAdded(historyRef, (data) => {
-  //     addHistoryElement(postElement, data.key, data.val().text);
-  //   });
-
-  // }, []);
-
-// useEffect(() => {
-//     const currentRef = ref(database, '/greenhouseCurrent');
-
-//     const unsubscribe = onValue(currentRef, (snapshot: DataSnapshot) => {
-//       if (snapshot.exists()) {
-//         const data = snapshot.val();
-//         console.log("data: ", data);
-//         setTemperature(data.temperature ?? null);
-//         setHumidity(data.humidity ?? null);
-//         setLight(data.light ?? null);
-//       }
-//     });
-
-//     return () => unsubscribe();
-//   }, []);
-
+const TempHistory = () => {
+  const { timestamps, temperatures } = useHistoricalData();
 
   return (
-    <View>
-      <Text>Temperature History</Text>
+    <View style={{ margin: 16 }}>
+      <Text variant="headlineSmall" style={{ marginBottom: 8 }}>
+        Temperature History
+      </Text>
 
       <LineChart
         data={{
-          labels: ["13.00", "14.00", "15.00", "16.00", "17.00"],
+          labels: timestamps,
           datasets: [
             {
-              data: [
-                Math.random() * 100,
-                Math.random() * 100,
-                Math.random() * 100,
-                Math.random() * 100,
-                Math.random() * 100,
-                Math.random() * 100,
-                Math.random() * 100,
-                Math.random() * 100,
-                Math.random() * 100,
-                Math.random() * 100,
-                Math.random() * 100,
-                Math.random() * 100,
-                Math.random() * 100,
-                Math.random() * 100,
-                Math.random() * 100,
-                Math.random() * 100,
-                Math.random() * 100,
-              ]
+              data: temperatures 
             }
           ]
         }}
-        width={Dimensions.get("window").width}
+        width={Dimensions.get("window").width - 32}
         height={220}
         chartConfig={chartConfig}
         bezier
@@ -91,8 +50,4 @@ export default function TempHistory() {
   )
 }
 
-
-function addHistoryElement(postElement: any, key: string | null, text: any) {
-  throw new Error("Function not implemented.");
-}
-
+export default TempHistory;
