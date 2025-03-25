@@ -3,8 +3,9 @@ import { database } from "../firebase/firebase";
 import { useEffect, useRef, useState } from "react";
 
 const formatTimestampToHour = (timestamp: number) => {
-    const date = new Date(timestamp * 1000);
-    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit"} )
+  const date = new Date(timestamp * 1000);
+  console.log("date to string: ", date.toString());
+  return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit"} )
   }
 
 interface HistoryData {
@@ -41,28 +42,50 @@ export const useHistoricalData = () => {
       const dataObj = snapshot.val();
       const dataArray = Object.values(dataObj) as HistoryData[];
 
-      // Sort by timestamp
       dataArray.sort((a, b) => a.timestamp - b.timestamp);
+      
+      const validItems = dataArray.filter(
+        (item) =>
+          Number.isFinite(item.timestamp) &&
+          Number.isFinite(item.temperature) &&
+          Number.isFinite(item.humidity) &&
+          Number.isFinite(item.light) &&
+          !isNaN(item.temperature) &&
+          !isNaN(item.humidity) &&
+          !isNaN(item.light) &&
+          isFinite(item.temperature) &&
+          isFinite(item.humidity) &&
+          isFinite(item.light)
+      );
 
-      // Build new label array (converted to "HH:MM")
-      const newTimes = dataArray.map((item) => formatTimestampToHour(item.timestamp));
+      const newTimes = validItems.map((item) => formatTimestampToHour(item.timestamp));
+      console.log("newTimes: ", newTimes);
+      
+      const newTemps = validItems.map((item) => item.temperature);
+      const newHumids = validItems.map((item) => item.humidity);
+      const newLights = validItems.map((item) => item.light);
 
-      // Build new sensor arrays
-      const newTemps = dataArray.map((item) => item.temperature);
-      const newHumids = dataArray.map((item) => item.humidity);
-      const newLights = dataArray.map((item) => item.light);
+      if (!validItems.length) {
+        setTimestamps([]);
+        setTemperatures([]);
+        setHumidities([]);
+        setLight([]);
+        return;
+      }
 
-      console.log("Labels:", newTimes);
-      console.log("Temps:", newTemps);
+      console.log("time:", newTimes);
+      console.log("temp:", newTemps);
+      console.log("hum:", newHumids);
+      console.log("light:", newLights);
 
-      // Update state
       setTimestamps(newTimes);
       setTemperatures(newTemps);
+      setHumidities(newHumids);
+      setLight(newLights);
     });
 
-    // Cleanup subscription on unmount
     return () => unsubscribe();
   }, []);
 
-  return { timestamps, temperatures };
+  return { timestamps, temperatures, humidities, light };
 }

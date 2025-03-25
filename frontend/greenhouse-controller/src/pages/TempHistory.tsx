@@ -22,32 +22,45 @@ const chartConfig = {
 const TempHistory = () => {
   const { timestamps, temperatures } = useHistoricalData();
 
+  if (timestamps.length !== temperatures.length) {
+    console.warn("Label/data length mismatch");
+  }
+
+  const hasValidData =
+    timestamps.length > 0 &&
+    temperatures.length > 0 &&
+    timestamps.length === temperatures.length;
+
   return (
     <View style={{ margin: 16 }}>
       <Text variant="headlineSmall" style={{ marginBottom: 8 }}>
         Temperature History
       </Text>
 
-      <LineChart
-        data={{
-          labels: timestamps,
-          datasets: [
-            {
-              data: temperatures 
-            }
-          ]
-        }}
-        width={Dimensions.get("window").width - 32}
-        height={220}
-        chartConfig={chartConfig}
-        bezier
-        style={{
-          marginVertical: 8,
-          borderRadius: 16
-        }}
-      />
+      {!hasValidData ? (
+        <Text>No temperature history available...</Text>
+      ) : (
+        <LineChart
+          data={{
+            labels: timestamps,
+            datasets: [
+              {
+                data: temperatures.length > 0 ? temperatures : [0],
+              },
+            ],
+          }}
+          width={Dimensions.get("window").width - 32}
+          height={220}
+          chartConfig={chartConfig}
+          bezier
+          style={{
+            marginVertical: 8,
+            borderRadius: 16,
+          }}
+        />
+      )}
     </View>
-  )
+  );
 }
 
 export default TempHistory;
