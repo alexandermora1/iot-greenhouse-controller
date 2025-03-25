@@ -197,7 +197,7 @@ void loop() {
   }
 
 
-  // Wait 10 seconds before next reading. Final interval will probably be 15 minutes.
-  delay(10000);
+  // Wait 15 minutes before next reading.
+  delay(900000);
 }
 
