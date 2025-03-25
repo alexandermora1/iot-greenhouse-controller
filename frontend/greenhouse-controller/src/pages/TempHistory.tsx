@@ -4,7 +4,7 @@ import { Dimensions, View } from "react-native";
 import { Text } from "react-native-paper";
 import { database } from "../firebase/firebase";
 import { LineChart } from "react-native-chart-kit";
-import { useHistoricalData } from "../hooks/HistoricalData";
+import { useHistoricalData } from "../hooks/useHistoricalData";
 
 
 const chartConfig = {

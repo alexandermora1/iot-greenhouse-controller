@@ -1,4 +1,4 @@
-import { onValue, ref } from "firebase/database";
+import { onValue, orderByChild, query, ref, startAt } from "firebase/database";
 import { database } from "../firebase/firebase";
 import { useEffect, useRef, useState } from "react";
 
@@ -15,17 +15,26 @@ interface HistoryData {
 }
 
 export const useHistoricalData = () => {
-  const [temperatures, setTemperatures] = useState <number[]>([]);
+  const [temperatures, setTemperatures] = useState<number[]>([]);
+  const [humidities, setHumidities] = useState<number[]>([]);
+  const [light, setLight] = useState<number[]>([]);
   const [timestamps, setTimestamps] = useState <string[]>([]);
+
+  const now = Math.floor(Date.now() / 1000);
+  const oneWeekAgo = now - 7 * 24 * 60 * 60; // now minus one week in seconds (604800 seconds)
 
   useEffect(() => {
     const historyRef = ref(database, "greenhouseHistory");
+    const weekHistory = query(historyRef, orderByChild("timestamp"), startAt(oneWeekAgo));
+
     // Listen for changes in /greenhouseHistory
-    const unsubscribe = onValue(historyRef, (snapshot) => {
+    const unsubscribe = onValue(weekHistory, (snapshot) => {
       if (!snapshot.exists()) {
         console.log("No data at greenhouseHistory");
         setTimestamps([]);
         setTemperatures([]);
+        setHumidities([]);
+        setLight([]);
         return;
       }
       // Convert object to an array
@@ -38,8 +47,10 @@ export const useHistoricalData = () => {
       // Build new label array (converted to "HH:MM")
       const newTimes = dataArray.map((item) => formatTimestampToHour(item.timestamp));
 
-      // Build new temperature array
+      // Build new sensor arrays
       const newTemps = dataArray.map((item) => item.temperature);
+      const newHumids = dataArray.map((item) => item.humidity);
+      const newLights = dataArray.map((item) => item.light);
 
       console.log("Labels:", newTimes);
       console.log("Temps:", newTemps);
