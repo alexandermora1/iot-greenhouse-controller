@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 
 const formatTimestampToHour = (timestamp: number) => {
   const date = new Date(timestamp * 1000);
-  console.log("date to string: ", date.toString());
   return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit"} )
   }
 
