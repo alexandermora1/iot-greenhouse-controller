@@ -20,8 +20,6 @@ const chartConfig = {
 
 
 const TempHistory = () => {
-  const [displayLabels, setDisplayLabels] = useState<string[]>([]);
-
   const { timestamps, temperatures } = useHistoricalData();
 
   if (timestamps.length !== temperatures.length) {
