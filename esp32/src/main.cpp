@@ -81,10 +81,12 @@ void setup() {
   config.api_key = FIREBASE_API_KEY;
   config.database_url = FIREBASE_DB_URL;
 
-  // TODO - Sign up or sign in
-  if (Firebase.signUp(&config, &auth, "", "")) {
+  if (Firebase.signUp(&config, &auth, FIREBASE_AUTH_EMAIL, FIREBASE_AUTH_PASSWORD))
+  {
     Serial.println("Firebase SignUp successful");
-  } else {
+  }
+  else
+  {
     Serial.printf("SignUp Error: %s\n", config.signer.signupError.message.c_str());
   }
 
