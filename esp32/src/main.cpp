@@ -1,5 +1,3 @@
-
- 
 #include <Arduino.h>
 // #include <FirebaseJson.h>
 #include <Firebase_ESP_Client.h>
@@ -30,13 +28,13 @@ Adafruit_SHT31 sht31 = Adafruit_SHT31();
 // LTR-329 light sensor
 Adafruit_LTR329 ltr = Adafruit_LTR329();
 
+// Track last time we read sensors (or push data)
+unsigned long lastReading = 0;
+const unsigned long READING_INTERVAL = 900000; // 15 minutes
+
 void setup() {
   Serial.begin(115200);
-
-  // Initialize Serial (for older boards that need the while)
-  while (!Serial) {
-    delay(10);
-  }
+  while (!Serial) {delay(10);}
 
   // Initialize SHT31
   Serial.println("Initializing SHT31...");
@@ -81,32 +79,56 @@ void setup() {
   config.api_key = FIREBASE_API_KEY;
   config.database_url = FIREBASE_DB_URL;
 
-  if (Firebase.signUp(&config, &auth, FIREBASE_AUTH_EMAIL, FIREBASE_AUTH_PASSWORD))
-  {
-    Serial.println("Firebase SignUp successful");
-  }
-  else
-  {
-    Serial.printf("SignUp Error: %s\n", config.signer.signupError.message.c_str());
+  /* Assign the callback function for the long running token generation task */
+  config.token_status_callback = tokenStatusCallback;
+
+  auth.user.email = FIREBASE_AUTH_EMAIL;     
+  auth.user.password = FIREBASE_AUTH_PASSWORD; 
+
+  /* Initialize the library with the Firebase authen and config */
+  Firebase.begin(&config, &auth);
+  Firebase.reconnectWiFi(true);
+  
+  // Wait for authentication to complete
+  Serial.println("Waiting for Firebase authentication...");
+  unsigned long authStart = millis();
+  while (!Firebase.ready() && millis() - authStart < 30000) { // timeout after 30 seconds
+    Serial.print(".");
+    delay(1000);
   }
 
-  // Initialize the library
-  Firebase.begin(&config, &auth);
+  if (!Firebase.ready()) {
+    Serial.println("\nFirebase authentication failed! Restarting...");
+    ESP.restart();
+  }
+  
+  Serial.println("\nFirebase authenticated!");
 }
 
 
 void loop() {
+  // Check Firebase connection before proceeding
+  if (!Firebase.ready()) {
+    Serial.println("Firebase not ready. Attempting to reconnect...");
+    delay(1000);
+    return;
+  }
+
+  // If 15 minutes have not yet passed, do nothing
+  if (millis() - lastReading < READING_INTERVAL)
+  {
+    return;
+  }
+  lastReading = millis(); // reset the timer for the next reading
+
   // Get current epoch time
   time_t now = time(nullptr);
-  Serial.print("Epoch time: ");
-  Serial.println((long)now);
-
+  Serial.printf("Epoch time: %ld\n", (long)now);
 
   // Read SHT31 and offset incorrect temperature value
   float measuredTemp = sht31.readTemperature();
   float calibrationOffset = -4.0; //Subtract 4 degrees
   float t = measuredTemp + calibrationOffset;
-
   float h = sht31.readHumidity();
 
   if (! isnan(t)) {  // check if 'is not a number'
@@ -152,27 +174,52 @@ void loop() {
   // Overwrites the "/current..." paths each time a sensor value is read
   // ------------------------------------------------------------------
   // Temperature
-  if (Firebase.RTDB.setFloat(&fbdata, "/greenhouseCurrent/temperature", t)) {
-    Serial.println("Temperature data sent successfully to Firebase.");
-  } else {
-    Serial.print("Failed to send temperature data: ");
-    Serial.println(fbdata.errorReason());
+  bool dataSent = false;
+  int retryCount = 0;
+  const int maxRetries = 3;
+
+  while (!dataSent && retryCount < maxRetries) {
+    if (Firebase.RTDB.setFloat(&fbdata, "/greenhouseCurrent/temperature", t)) {
+      Serial.println("Temperature data sent successfully to Firebase.");
+      dataSent = true;
+    } else {
+      Serial.printf("Failed to send temperature data (attempt %d/%d): %s\n", 
+        retryCount + 1, maxRetries, fbdata.errorReason().c_str());
+      retryCount++;
+      delay(1000); // Wait a second before retrying
+    }
   }
 
-  // Humidity
-  if (Firebase.RTDB.setFloat(&fbdata, "/greenhouseCurrent/humidity", h)) {
-    Serial.println("Humidity data sent successfully to Firebase.");
-  } else {
-    Serial.print("Failed to send humidity data: ");
-    Serial.println(fbdata.errorReason());
+  // Reset dataSent and retryCount for humidity
+  dataSent = false;
+  retryCount = 0;
+
+  while (!dataSent && retryCount < maxRetries) {
+    if (Firebase.RTDB.setFloat(&fbdata, "/greenhouseCurrent/humidity", h)) {
+      Serial.println("Humidity data sent successfully to Firebase.");
+      dataSent = true;
+    } else {
+      Serial.printf("Failed to send humidity data (attempt %d/%d): %s\n", 
+        retryCount + 1, maxRetries, fbdata.errorReason().c_str());
+      retryCount++;
+      delay(1000);
+    }
   }
 
-  // Light
-  if (Firebase.RTDB.setInt(&fbdata, "/greenhouseCurrent/light", visible_only)) {
-    Serial.println("Visible light sent to Firebase");
-  } else {
-    Serial.print("Failed to send visible light: ");
-    Serial.println(fbdata.errorReason());
+  // Reset for light data
+  dataSent = false;
+  retryCount = 0;
+
+  while (!dataSent && retryCount < maxRetries) {
+    if (Firebase.RTDB.setInt(&fbdata, "/greenhouseCurrent/light", visible_only)) {
+      Serial.println("Light data sent successfully to Firebase.");
+      dataSent = true;
+    } else {
+      Serial.printf("Failed to send light data (attempt %d/%d): %s\n", 
+        retryCount + 1, maxRetries, fbdata.errorReason().c_str());
+      retryCount++;
+      delay(1000);
+    }
   }
 
 
@@ -182,24 +229,29 @@ void loop() {
   // Firebase will generate a unique key for each push so a time series can be retrieved on the frontend
   // ------------------------------------------------------------------
   {
-  json.clear();
-  json.set("temperature", t);
-  json.set("humidity", h);
-  json.set("light", visible_only);
-  json.set("timestamp", (long)now);
+    json.clear();
+    json.set("temperature", t);
+    json.set("humidity", h);
+    json.set("light", visible_only);
+    json.set("timestamp", (long)now);
 
-  String historyPath = "/greenhouseHistory";
+    String historyPath = "/greenhouseHistory";
+    
+    dataSent = false;
+    retryCount = 0;
 
-  if (Firebase.RTDB.pushJSON(&fbdata, historyPath, &json)) {
-    Serial.println("Historical sensor data pushed to firebase.");
-  } else {
-    Serial.print("Failed to push historical data: ");
-    Serial.println(fbdata.errorReason());
+    while (!dataSent && retryCount < maxRetries) {
+      if (Firebase.RTDB.pushJSON(&fbdata, historyPath, &json)) {
+        Serial.println("Historical sensor data pushed to Firebase.");
+        dataSent = true;
+      } else {
+        Serial.printf("Failed to push historical data (attempt %d/%d): %s\n", 
+          retryCount + 1, maxRetries, fbdata.errorReason().c_str());
+        retryCount++;
+        delay(1000);
+      }
     }
   }
 
-
-  // Wait 15 minutes before next reading.
-  delay(900000);
 }
 
