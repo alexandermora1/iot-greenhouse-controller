@@ -30,7 +30,7 @@ Adafruit_LTR329 ltr = Adafruit_LTR329();
 
 // Track last time we read sensors (or push data)
 unsigned long lastReading = 0;
-const unsigned long READING_INTERVAL = 900000; // 15 minutes
+const unsigned long READING_INTERVAL = 3600000; // 1 hour
 
 void setup() {
   Serial.begin(115200);
@@ -114,7 +114,7 @@ void loop() {
     return;
   }
 
-  // If 15 minutes have not yet passed, do nothing
+  // If 1 hour have not yet passed, do nothing
   if (millis() - lastReading < READING_INTERVAL)
   {
     return;
