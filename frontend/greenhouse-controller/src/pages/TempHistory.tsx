@@ -9,10 +9,13 @@ const chartConfig = {
   backgroundGradientFromOpacity: 0.6,
   backgroundGradientTo: "#007982",
   backgroundGradientToOpacity: 0.6,
-  color: (opacity = 1) => `rgba(0, 238, 255, ${opacity})`,
+  color: (opacity = 1) => `rgba(0, 238, 255, 0.8)`,
   strokeWidth: 3,
   barPercentage: 1,
   useShadowColorFromDataset: false,
+  propsForBackgroundLines: {
+    strokeWidth: "0"
+  },
 };
 
 type TimeRange = "24h" | "7d";
@@ -78,6 +81,7 @@ export default function TempHistory() {
             datasets: [
               {
                 data: temperaturesArray.length > 0 ? temperaturesArray : [0],
+                withDots: false,
               },
               {
                 // "Dummy" dataset to push the y-axis to 50 if needed
