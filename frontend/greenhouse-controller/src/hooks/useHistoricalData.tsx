@@ -1,90 +1,69 @@
+// useHistoricalData.ts
+import { useEffect, useState } from "react";
 import { onValue, orderByChild, query, ref, startAt } from "firebase/database";
 import { database } from "../firebase/firebase";
-import { useEffect, useRef, useState } from "react";
 
-const formatTimestampToHour = (timestamp: number) => {
-  const date = new Date(timestamp * 1000);
-  return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit"} )
-  }
-
-interface HistoryData {
+export interface HistoryData {
   temperature: number;
   humidity: number;
   light: number;
   timestamp: number;
 }
 
-export const useHistoricalData = () => {
-  const [temperatures, setTemperatures] = useState<number[]>([]);
-  const [humidities, setHumidities] = useState<number[]>([]);
-  const [light, setLight] = useState<number[]>([]);
-  const [timestamps, setTimestamps] = useState <string[]>([]);
-
-  const now = Math.floor(Date.now() / 1000);
-  const oneWeekAgo = now - 7 * 24 * 60 * 60; // now minus one week in seconds (604800 seconds)
+/**
+ * A custom hook that fetches up to the last 7 days of sensor readings from
+ * "/greenhouseHistory" and returns them as a single array of objects, each
+ * containing { timestamp, temperature, humidity, light }.
+ */
+export const useHistoricalData = (): HistoryData[] => {
+  const [records, setRecords] = useState<HistoryData[]>([]);
 
   useEffect(() => {
-    const historyRef = ref(database, "greenhouseHistory");
-    const weekHistory = query(historyRef, orderByChild("timestamp"), startAt(oneWeekAgo));
+    // Calculate the cutoff for the last 7 days
+    const now = Math.floor(Date.now() / 1000);
+    const oneWeekAgo = now - 7 * 24 * 60 * 60;
 
-    // Listen for changes in /greenhouseHistory
+    // Build a query to get only entries where timestamp >= oneWeekAgo
+    const historyRef = ref(database, "greenhouseHistory");
+    const weekHistory = query(
+      historyRef,
+      orderByChild("timestamp"),
+      startAt(oneWeekAgo)
+    );
+
+    // Listen for changes
     const unsubscribe = onValue(weekHistory, (snapshot) => {
       if (!snapshot.exists()) {
         console.log("No data at greenhouseHistory");
-        setTimestamps([]);
-        setTemperatures([]);
-        setHumidities([]);
-        setLight([]);
+        setRecords([]);
         return;
       }
-      // Convert object to an array
+
       const dataObj = snapshot.val();
       const dataArray = Object.values(dataObj) as HistoryData[];
 
+      // Sort by timestamp ascending
       dataArray.sort((a, b) => a.timestamp - b.timestamp);
-      
-      const validItems = dataArray.filter(
-        (item) =>
+
+      // Optional: Filter out invalid or NaN values
+      const validItems = dataArray.filter((item) => {
+        return (
           Number.isFinite(item.timestamp) &&
           Number.isFinite(item.temperature) &&
           Number.isFinite(item.humidity) &&
-          Number.isFinite(item.light) &&
-          !isNaN(item.temperature) &&
-          !isNaN(item.humidity) &&
-          !isNaN(item.light) &&
-          isFinite(item.temperature) &&
-          isFinite(item.humidity) &&
-          isFinite(item.light)
-      );
+          Number.isFinite(item.light)
+        );
+      });
 
-      const newTimes = validItems.map((item) => formatTimestampToHour(item.timestamp));
-      console.log("newTimes: ", newTimes);
-      
-      const newTemps = validItems.map((item) => item.temperature);
-      const newHumids = validItems.map((item) => item.humidity);
-      const newLights = validItems.map((item) => item.light);
+      // For debugging
+      console.log("Fetched records:", validItems);
 
-      if (!validItems.length) {
-        setTimestamps([]);
-        setTemperatures([]);
-        setHumidities([]);
-        setLight([]);
-        return;
-      }
-
-      console.log("time:", newTimes);
-      console.log("temp:", newTemps);
-      console.log("hum:", newHumids);
-      console.log("light:", newLights);
-
-      setTimestamps(newTimes);
-      setTemperatures(newTemps);
-      setHumidities(newHumids);
-      setLight(newLights);
+      setRecords(validItems);
     });
 
+    // Cleanup listener on unmount
     return () => unsubscribe();
   }, []);
 
-  return { timestamps, temperatures, humidities, light };
-}
+  return records;
+};
