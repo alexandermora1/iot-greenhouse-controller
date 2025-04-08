@@ -33,6 +33,9 @@ export default function TempHistory() {
   const timestampsArray = filteredRecords.map((item) => item.timestamp);
   const temperaturesArray = filteredRecords.map((item) => item.temperature);
 
+  // Compute summary stats
+  const { min, max, avg } = getSummaryStats(temperaturesArray);
+
   // Convert numeric timestamps to strings, passing the range so we can format differently
   const labels = timestampsArray.map((ts) => formatTimestamp(ts, timeRange));
 
@@ -75,32 +78,46 @@ export default function TempHistory() {
       {!hasValidData ? (
         <Text>No temperature history available...</Text>
       ) : (
-        <LineChart
-          data={{
-            labels: getFormattedLabels(),
-            datasets: [
-              {
-                data: temperaturesArray.length > 0 ? temperaturesArray : [0],
-                withDots: false,
-              },
-              {
-                // "Dummy" dataset to push the y-axis to 50 if needed
-                data: [50],
-                color: () => "rgba(0,0,0,0)",
-                withDots: false,
-              },
-            ],
-          }}
-          width={Dimensions.get("window").width - 32}
-          height={220}
-          fromZero
-          chartConfig={{
-            ...chartConfig,
-            propsForLabels: { fontSize: 12 },
-          }}
-          bezier
-          style={{ marginVertical: 8, borderRadius: 16 }}
-        />
+        <>
+          <LineChart
+            data={{
+              labels: getFormattedLabels(),
+              datasets: [
+                {
+                  data: temperaturesArray.length > 0 ? temperaturesArray : [0],
+                  withDots: false, // hide dots if you want
+                },
+                {
+                  // "Dummy" dataset to push the y-axis to 50, if needed
+                  data: [50],
+                  withDots: false,
+                  color: () => "rgba(0,0,0,0)",
+                },
+              ],
+            }}
+            width={Dimensions.get("window").width - 32}
+            height={220}
+            fromZero
+            chartConfig={chartConfig}
+            style={{ marginVertical: 8, borderRadius: 16 }}
+            bezier
+          />
+
+          {/* The textual summary for accessibility (and quick overview) */}
+          <View style={{ marginTop: 8 }}>
+            {min != null && max != null && avg != null ? (
+              <Text
+                variant="bodyMedium"
+                accessibilityLabel="Temperature Summary"
+              >
+                Highest: {max.toFixed(1)} °C | Lowest: {min.toFixed(1)} °C |
+                Average: {avg.toFixed(1)} °C
+              </Text>
+            ) : (
+              <Text variant="bodyMedium">No valid data to summarize.</Text>
+            )}
+          </View>
+        </>
       )}
     </View>
   );
@@ -135,4 +152,16 @@ function formatTimestamp(ts: number, range: "24h" | "7d") {
     // or "month: 'short', day: 'numeric'" => "Mar 30"
     return date.toLocaleDateString([], { weekday: "long" });
   }
+}
+
+function getSummaryStats(data: number[]) {
+  if (data.length === 0) {
+    return { min: null, max: null, avg: null };
+  }
+  const min = Math.min(...data);
+  const max = Math.max(...data);
+  const sum = data.reduce((acc, val) => acc + val, 0);
+  const avg = sum / data.length;
+
+  return { min, max, avg };
 }
