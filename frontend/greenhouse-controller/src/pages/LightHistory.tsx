@@ -1,18 +1,17 @@
 import React from "react";
-import { View } from "react-native";
-import { Text } from "react-native-paper";
-
-
-
-
+import SensorChart, { HistoryRecord } from "../components/SensorChart";
+import { useHistoricalData } from "../hooks/useHistoricalData";
 
 export default function LightHistory() {
-
+  const records = useHistoricalData();
   return (
-    <View>
-      <Text>Light History</Text>
-    </View>
-  )
+    <SensorChart
+      title="Light History"
+      unit="Lux"
+      color="#FFFFFF" // white
+      records={records}
+      getValue={(r) => r.light}
+      maxYValue={2000}
+    />
+  );
 }
-
-
