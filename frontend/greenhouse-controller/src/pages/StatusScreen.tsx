@@ -1,38 +1,57 @@
 import React, { useEffect, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Card, Text, Avatar, useTheme } from "react-native-paper";
-import { ScrollView, View, StyleSheet, useColorScheme } from "react-native";
 import { database } from "../firebase/firebase";
-import { ref, onValue, DataSnapshot } from "firebase/database";
-import { useNavigation, NavigationProp } from "@react-navigation/native";
 import { RootStackParamList } from "../routes/Routes";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
-
-
 export default function StatusScreen() {
+  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
+
   const [temperature, setTemperature] = useState<number | null>(null);
   const [humidity, setHumidity] = useState<number | null>(null);
   const [light, setLight] = useState<number | null>(null);
-  
-  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
+  const [lastReadingTime, setLastReadingTime] = useState<number | null>(null);
 
   useEffect(() => {
-    const currentRef = ref(database, '/greenhouseCurrent');
+    // Query that fetches only the last entry from greenhouseHistory
+    const historyRef = ref(database, "greenhouseHistory");
+    const lastOneQuery = query(historyRef, limitToLast(1));
 
-    const unsubscribe = onValue(currentRef, (snapshot: DataSnapshot) => {
-      if (snapshot.exists()) {
-        const data = snapshot.val();
-        console.log("data: ", data);
-        setTemperature(data.temperature ?? null);
-        setHumidity(data.humidity ?? null);
-        setLight(data.light ?? null);
+    // Subscribe to changes
+    const unsubscribe = onValue(lastOneQuery, (snapshot: DataSnapshot) => {
+      if (!snapshot.exists()) {
+        setTemperature(null);
+        setHumidity(null);
+        setLight(null);
+        setLastReadingTime(null);
+        return;
       }
+
+      const dataObj = snapshot.val();
+      const keys = Object.keys(dataObj);
+      const lastKey = keys[0]; // Should only be 1 key here
+      const record = dataObj[lastKey];
+
+      setTemperature(typeof record.temperature === "number" ? record.temperature : null);
+      setHumidity(typeof record.humidity === "number" ? record.humidity : null);
+      setLight(typeof record.light === "number" ? record.light : null);
+      setLastReadingTime(typeof record.timestamp === "number" ? record.timestamp : null);
     });
 
     return () => unsubscribe();
   }, []);
 
+  // Helper to format epoch time in seconds to a short string e.g.: "Apr 9, 14:50"
+  function formatReadingTime(epochSec: number) {
+    const date = new Date(epochSec * 1000);
+
+    return date.toLocaleString([], {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }
 
   return (
     <SafeAreaView style={{ padding: 8, flex: 1 }}>
@@ -45,6 +64,7 @@ export default function StatusScreen() {
       </View>
 
       <View style={styles.sensorRow}>
+        {/* Temperature Card */}
         <Card
           mode="contained"
           style={styles.sensorCard}
@@ -59,7 +79,7 @@ export default function StatusScreen() {
           </Card.Content>
         </Card>
 
-        
+        {/* Humidity Card */}
         <Card
           mode="contained"
           style={styles.sensorCard}
@@ -74,7 +94,7 @@ export default function StatusScreen() {
           </Card.Content>
         </Card>
 
-
+        {/* Light Card */}
         <Card
           mode="contained"
           style={styles.sensorCard}
@@ -90,32 +110,41 @@ export default function StatusScreen() {
         </Card>
       </View>
 
-      
+      {/* Show last reading time if present */}
+      {lastReadingTime && (
+        <View style={{ marginTop: 16 }}>
+          <Text variant="bodyLarge">
+            Last sensor update: {formatReadingTime(lastReadingTime)}
+          </Text>
+        </View>
+      )}
+
+      {/* Example notifications (placeholder) */}
       <ScrollView style={{ flex: 1, margin: 4, marginTop: 36 }}>
         <Text style={{ marginBottom: 8 }} variant="titleLarge">
           Notifications
         </Text>
-        <Card style={{ marginBottom: 8 }}>
-          <Card.Title title="Temperature low"></Card.Title>
+        <Card style={styles.notificationCard}>
+          <Card.Title title="Temperature low" />
           <Card.Content>
             <Text>
-              Lorem ipsum, dolor sit amet consectetur adipisicing elit.{" "}
+              Lorem ipsum, dolor sit amet consectetur adipisicing elit.
             </Text>
           </Card.Content>
         </Card>
-        <Card style={{ marginBottom: 8 }}>
-          <Card.Title title="Temperature low"></Card.Title>
+        <Card style={styles.notificationCard}>
+          <Card.Title title="Temperature low" />
           <Card.Content>
             <Text>
-              Lorem ipsum, dolor sit amet consectetur adipisicing elit.{" "}
+              Lorem ipsum, dolor sit amet consectetur adipisicing elit.
             </Text>
           </Card.Content>
         </Card>
-        <Card style={{ marginBottom: 8 }}>
-          <Card.Title title="Temperature low"></Card.Title>
+        <Card style={styles.notificationCard}>
+          <Card.Title title="Temperature low" />
           <Card.Content>
             <Text>
-              Lorem ipsum, dolor sit amet consectetur adipisicing elit.{" "}
+              Lorem ipsum, dolor sit amet consectetur adipisicing elit.
             </Text>
           </Card.Content>
         </Card>
