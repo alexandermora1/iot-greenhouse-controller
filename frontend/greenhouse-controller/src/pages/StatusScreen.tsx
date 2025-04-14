@@ -1,6 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Card, Text, Avatar } from "react-native-paper";
+import { ScrollView, View, StyleSheet } from "react-native";
 import { database } from "../firebase/firebase";
+import * as Notifications from "expo-notifications";
+import { ref, query, limitToLast, onValue, DataSnapshot } from "firebase/database";
+import { NavigationProp, useNavigation } from "@react-navigation/native";
 import { RootStackParamList } from "../routes/Routes";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
@@ -11,6 +16,9 @@ export default function StatusScreen() {
   const [humidity, setHumidity] = useState<number | null>(null);
   const [light, setLight] = useState<number | null>(null);
   const [lastReadingTime, setLastReadingTime] = useState<number | null>(null);
+  const [lastLowTempNotify, setLastLowTempNotify] = useState<number | null>(null);
+  const [lastHighHumidNotify, setLastHighHumidNotify] = useState<number | null>(null);
+  const [lastLowLightNotify, setLastLowLightNotify] = useState<number | null>(null);
 
   useEffect(() => {
     // Query that fetches only the last entry from greenhouseHistory
@@ -52,6 +60,78 @@ export default function StatusScreen() {
       minute: "2-digit",
     });
   }
+
+
+  useEffect(() => {
+    // Listen to "current" or do the limitToLast(1) approach
+    const currentRef = ref(database, "/greenhouseCurrent");
+    const unsubscribe = onValue(currentRef, (snapshot) => {
+      if (!snapshot.exists()) return;
+
+      const data = snapshot.val();
+      const temp = data.temperature;
+      const humidity = data.humidity;
+      const light = data.light;
+
+      // Check each condition
+      checkLowTemp(temp);
+      checkHighHumidity(humidity);
+      checkLowLight(light);
+    });
+
+    return () => unsubscribe();
+  }, [
+    lastLowTempNotify, // re-run if these states change
+    lastHighHumidNotify,
+    lastLowLightNotify,
+  ]);
+
+
+  function checkLowTemp(temp: number) {
+    if (temp < 10 && hasDayPassedSince(lastLowTempNotify)) {
+      Notifications.scheduleNotificationAsync({
+        content: {
+          title: "Low Temperature",
+          body: `Temperature is only ${temp.toFixed(1)} °C!`,
+        },
+        trigger: null,
+      });
+      setLastLowTempNotify(Date.now());
+    }
+  }
+
+  function checkHighHumidity(humidity: number) {
+    if (humidity > 80 && hasDayPassedSince(lastHighHumidNotify)) {
+      Notifications.scheduleNotificationAsync({
+        content: {
+          title: "High Humidity",
+          body: `Humidity is at ${humidity.toFixed(1)}%`,
+        },
+        trigger: null,
+      });
+      setLastHighHumidNotify(Date.now());
+    }
+  }
+
+  function checkLowLight(light: number) {
+    if (light < 100 && hasDayPassedSince(lastLowLightNotify)) {
+      Notifications.scheduleNotificationAsync({
+        content: {
+          title: "Low Light",
+          body: `Light level is only ${light} Lux!`,
+        },
+        trigger: null,
+      });
+      setLastLowLightNotify(Date.now());
+    }
+  }
+
+  function hasDayPassedSince(lastTime: number | null): boolean {
+    if (!lastTime) return true; // never notified
+    const ONE_DAY = 24 * 60 * 60 * 1000;
+    return Date.now() - lastTime >= ONE_DAY;
+  }
+
 
   return (
     <SafeAreaView style={{ padding: 8, flex: 1 }}>

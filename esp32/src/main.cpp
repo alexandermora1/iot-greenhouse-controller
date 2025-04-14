@@ -1,5 +1,4 @@
 #include <Arduino.h>
-// #include <FirebaseJson.h>
 #include <Firebase_ESP_Client.h>
 #include "addons/TokenHelper.h"
 #include <Wire.h>
@@ -30,7 +29,7 @@ Adafruit_LTR329 ltr = Adafruit_LTR329();
 
 // Track last time we read sensors (or push data)
 unsigned long lastReading = 0;
-const unsigned long READING_INTERVAL = 3600000; // 1 hour
+const unsigned long READING_INTERVAL = 900000; // 15 minutes
 
 void setup() {
   Serial.begin(115200);
@@ -114,7 +113,7 @@ void loop() {
     return;
   }
 
-  // If 1 hour have not yet passed, do nothing
+  // If 15 minutes have not yet passed, do nothing
   if (millis() - lastReading < READING_INTERVAL)
   {
     return;
@@ -170,64 +169,16 @@ void loop() {
     Serial.println("LTR-329 data not yet available...");
   }
 
-  // Current sensor values for the main page of the app
-  // Overwrites the "/current..." paths each time a sensor value is read
-  // ------------------------------------------------------------------
-  // Temperature
-  bool dataSent = false;
-  int retryCount = 0;
-  const int maxRetries = 3;
-
-  while (!dataSent && retryCount < maxRetries) {
-    if (Firebase.RTDB.setFloat(&fbdata, "/greenhouseCurrent/temperature", t)) {
-      Serial.println("Temperature data sent successfully to Firebase.");
-      dataSent = true;
-    } else {
-      Serial.printf("Failed to send temperature data (attempt %d/%d): %s\n", 
-        retryCount + 1, maxRetries, fbdata.errorReason().c_str());
-      retryCount++;
-      delay(1000); // Wait a second before retrying
-    }
-  }
-
-  // Reset dataSent and retryCount for humidity
-  dataSent = false;
-  retryCount = 0;
-
-  while (!dataSent && retryCount < maxRetries) {
-    if (Firebase.RTDB.setFloat(&fbdata, "/greenhouseCurrent/humidity", h)) {
-      Serial.println("Humidity data sent successfully to Firebase.");
-      dataSent = true;
-    } else {
-      Serial.printf("Failed to send humidity data (attempt %d/%d): %s\n", 
-        retryCount + 1, maxRetries, fbdata.errorReason().c_str());
-      retryCount++;
-      delay(1000);
-    }
-  }
-
-  // Reset for light data
-  dataSent = false;
-  retryCount = 0;
-
-  while (!dataSent && retryCount < maxRetries) {
-    if (Firebase.RTDB.setInt(&fbdata, "/greenhouseCurrent/light", visible_only)) {
-      Serial.println("Light data sent successfully to Firebase.");
-      dataSent = true;
-    } else {
-      Serial.printf("Failed to send light data (attempt %d/%d): %s\n", 
-        retryCount + 1, maxRetries, fbdata.errorReason().c_str());
-      retryCount++;
-      delay(1000);
-    }
-  }
-
 
   // Historical sensor values for the deatil views of the app
   // Builds a JSON object for the historical sensor readings
   // The path is "/greenhouse/sensor1/history"
   // Firebase will generate a unique key for each push so a time series can be retrieved on the frontend
   // ------------------------------------------------------------------
+  bool dataSent = false;
+  int retryCount = 0;
+  const int maxRetries = 3;
+
   {
     json.clear();
     json.set("temperature", t);
