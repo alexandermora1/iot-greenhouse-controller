@@ -117,6 +117,7 @@ export default function SensorChart({
               propsForBackgroundLines: {
                 strokeWidth: 0, 
               },
+              decimalPlaces: 0
             }}
             bezier
             style={{ marginVertical: 8, borderRadius: 16 }}

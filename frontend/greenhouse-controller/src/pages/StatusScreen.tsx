@@ -8,9 +8,11 @@ import { ref, query, limitToLast, onValue, DataSnapshot } from "firebase/databas
 import { NavigationProp, useNavigation } from "@react-navigation/native";
 import { RootStackParamList } from "../routes/Routes";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useNotificationsContext } from "../context/NotificationsContext";
 
 export default function StatusScreen() {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
+  const { notifications } = useNotificationsContext();
 
   const [temperature, setTemperature] = useState<number | null>(null);
   const [humidity, setHumidity] = useState<number | null>(null);
@@ -20,6 +22,8 @@ export default function StatusScreen() {
   const [lastHighHumidNotify, setLastHighHumidNotify] = useState<number | null>(null);
   const [lastLowLightNotify, setLastLowLightNotify] = useState<number | null>(null);
 
+
+  // Fetch sensor data
   useEffect(() => {
     // Query that fetches only the last entry from greenhouseHistory
     const historyRef = ref(database, "greenhouseHistory");
@@ -62,8 +66,8 @@ export default function StatusScreen() {
   }
 
 
+  // Push notifications
   useEffect(() => {
-    // Listen to "current" or do the limitToLast(1) approach
     const currentRef = ref(database, "/greenhouseCurrent");
     const unsubscribe = onValue(currentRef, (snapshot) => {
       if (!snapshot.exists()) return;
@@ -73,10 +77,10 @@ export default function StatusScreen() {
       const humidity = data.humidity;
       const light = data.light;
 
-      // Check each condition
       checkLowTemp(temp);
       checkHighHumidity(humidity);
       checkLowLight(light);
+      checkHighTemp(temp);
     });
 
     return () => unsubscribe();
@@ -86,13 +90,36 @@ export default function StatusScreen() {
     lastLowLightNotify,
   ]);
 
-
+  // Notification sensor value checks
   function checkLowTemp(temp: number) {
     if (temp < 10 && hasDayPassedSince(lastLowTempNotify)) {
       Notifications.scheduleNotificationAsync({
         content: {
           title: "Low Temperature",
-          body: `Temperature is only ${temp.toFixed(1)} °C!`,
+          body: `${
+            lastReadingTime
+              ? formatReadingTime(lastReadingTime)
+              : "Unknown time"
+          }: Temperature is only ${temp.toFixed(1)} °C!`,
+          data: { sensor: "temperature" },
+        },
+        trigger: null,
+      });
+      setLastLowTempNotify(Date.now());
+    }
+  }
+
+  function checkHighTemp(temp: number) {
+    if (temp > 30 && hasDayPassedSince(lastLowTempNotify)) {
+      Notifications.scheduleNotificationAsync({
+        content: {
+          title: "High Temperature",
+          body: `${
+            lastReadingTime
+              ? formatReadingTime(lastReadingTime)
+              : "Unknown time"
+          }: Temperature is over ${temp.toFixed(1)} °C!`,
+          data: { sensor: "temperature" },
         },
         trigger: null,
       });
@@ -105,7 +132,12 @@ export default function StatusScreen() {
       Notifications.scheduleNotificationAsync({
         content: {
           title: "High Humidity",
-          body: `Humidity is at ${humidity.toFixed(1)}%`,
+          body: `${
+            lastReadingTime
+              ? formatReadingTime(lastReadingTime)
+              : "Unknown time"
+          }: Humidity is at ${humidity.toFixed(1)}%`,
+          data: { sensor: "humidity" },
         },
         trigger: null,
       });
@@ -118,7 +150,12 @@ export default function StatusScreen() {
       Notifications.scheduleNotificationAsync({
         content: {
           title: "Low Light",
-          body: `Light level is only ${light} Lux!`,
+          body: `${
+            lastReadingTime
+              ? formatReadingTime(lastReadingTime)
+              : "Unknown time"
+          }: Light level is only ${light} Lux!`,
+          data: { sensor: "light" },
         },
         trigger: null,
       });
@@ -199,36 +236,25 @@ export default function StatusScreen() {
         </View>
       )}
 
-      {/* Example notifications (placeholder) */}
+      {/* Notifications */}
       <ScrollView style={{ flex: 1, margin: 4, marginTop: 36 }}>
+        
+        {/* Heading */}
         <Text style={{ marginBottom: 8 }} variant="titleLarge">
           Notifications
         </Text>
-        <Card style={styles.notificationCard}>
-          <Card.Title title="Temperature low" />
-          <Card.Content>
-            <Text>
-              Lorem ipsum, dolor sit amet consectetur adipisicing elit.
-            </Text>
-          </Card.Content>
-        </Card>
-        <Card style={styles.notificationCard}>
-          <Card.Title title="Temperature low" />
-          <Card.Content>
-            <Text>
-              Lorem ipsum, dolor sit amet consectetur adipisicing elit.
-            </Text>
-          </Card.Content>
-        </Card>
-        <Card style={styles.notificationCard}>
-          <Card.Title title="Temperature low" />
-          <Card.Content>
-            <Text>
-              Lorem ipsum, dolor sit amet consectetur adipisicing elit.
-            </Text>
-          </Card.Content>
-        </Card>
+        
+        {/* Notification cards */}
+        {notifications.map((notif, index) => (
+          <Card key={index} style={{ marginBottom: 8 }}>
+            <Card.Title title={notif.request.content.title} />
+            <Card.Content>
+              <Text>{notif.request.content.body}</Text>
+            </Card.Content>
+          </Card>
+        ))}
       </ScrollView>
+
     </SafeAreaView>
   );
 }

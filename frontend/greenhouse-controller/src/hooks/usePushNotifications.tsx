@@ -8,12 +8,12 @@ import { Platform } from "react-native";
 
 export interface PushNotificationState {
   expoPushToken?: Notifications.ExpoPushToken;
-  notification?: Notifications.Notification;
+  notifications?: Notifications.Notification[];
 }
 
 export const usePushNotifications = (): PushNotificationState => {
   const [expoPushToken, setExpoPushToken] = useState<Notifications.ExpoPushToken | undefined>();
-  const [notification, setNotification] = useState<Notifications.Notification | undefined>();
+  const [notifications, setNotifications] = useState<Notifications.Notification[]>([]);
 
   const notificationsListener = useRef<Notifications.EventSubscription>();
   const responseListener = useRef<Notifications.EventSubscription>();
@@ -67,23 +67,31 @@ export const usePushNotifications = (): PushNotificationState => {
         setExpoPushToken(token);
       });
 
-      notificationsListener.current = Notifications.addNotificationReceivedListener((notification) => {
-        setNotification(notification);
-      });
+      notificationsListener.current =
+        Notifications.addNotificationReceivedListener((notification) => {
+         setNotifications((old) => [...old, notification]);
+        });
 
       responseListener.current = Notifications.addNotificationResponseReceivedListener((response) => {
-        console.log(response);
+        console.log("User tapped the notification:", response);
       });
 
       return () => {
-        Notifications.removeNotificationSubscription(notificationsListener.current!);
-
-        Notifications.removeNotificationSubscription(responseListener.current!);
+        if (notificationsListener.current) {
+          Notifications.removeNotificationSubscription(
+            notificationsListener.current
+          );
+        }
+        if (responseListener.current) {
+          Notifications.removeNotificationSubscription(
+            responseListener.current
+          );
+        }
       };
     }, [])
 
     return {
       expoPushToken,
-      notification,
+      notifications,
     };
   };

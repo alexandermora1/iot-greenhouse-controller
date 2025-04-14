@@ -5,14 +5,17 @@ import Routes from "./src/routes/Routes";
 import { DarkTheme, NavigationContainer } from "@react-navigation/native";
 import { MD3DarkTheme as PaperDarkTheme } from "react-native-paper";
 import { AuthProvider } from './src/context/AuthContext';
+import { NotificationsProvider } from "./src/context/NotificationsContext";
 
 export default function App() {
   return (
     <PaperProvider theme={PaperDarkTheme}>
       <AuthProvider>
-        <NavigationContainer theme={DarkTheme}>
-          <Routes />
-        </NavigationContainer>
+        <NotificationsProvider>
+          <NavigationContainer theme={DarkTheme}>
+            <Routes />
+          </NavigationContainer>
+        </NotificationsProvider>
       </AuthProvider>
     </PaperProvider>
   );

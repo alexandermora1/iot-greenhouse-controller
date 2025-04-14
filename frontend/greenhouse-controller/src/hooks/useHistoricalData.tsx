@@ -56,7 +56,7 @@ export const useHistoricalData = (): HistoryData[] => {
       });
 
       // For debugging
-      console.log("Fetched records:", validItems);
+      // console.log("Fetched records:", validItems);
 
       setRecords(validItems);
     });
