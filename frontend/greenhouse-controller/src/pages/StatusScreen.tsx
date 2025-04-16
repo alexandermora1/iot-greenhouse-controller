@@ -19,6 +19,7 @@ export default function StatusScreen() {
   const [light, setLight] = useState<number | null>(null);
   const [lastReadingTime, setLastReadingTime] = useState<number | null>(null);
   const [lastLowTempNotify, setLastLowTempNotify] = useState<number | null>(null);
+  const [lastHighTempNotify, setLastHighTempNotify] = useState<number | null>(null);
   const [lastHighHumidNotify, setLastHighHumidNotify] = useState<number | null>(null);
   const [lastLowLightNotify, setLastLowLightNotify] = useState<number | null>(null);
 
@@ -41,7 +42,7 @@ export default function StatusScreen() {
 
       const dataObj = snapshot.val();
       const keys = Object.keys(dataObj);
-      const lastKey = keys[0]; // Should only be 1 key here
+      const lastKey = keys[0]; 
       const record = dataObj[lastKey];
 
       setTemperature(typeof record.temperature === "number" ? record.temperature : null);
@@ -68,19 +69,23 @@ export default function StatusScreen() {
 
   // Push notifications
   useEffect(() => {
-    const currentRef = ref(database, "/greenhouseCurrent");
-    const unsubscribe = onValue(currentRef, (snapshot) => {
+    const historyRef = ref(database, "/greenhouseHistory");
+    const lastOneQuery = query(historyRef, limitToLast(1));
+
+    const unsubscribe = onValue(lastOneQuery, (snapshot) => {
       if (!snapshot.exists()) return;
 
-      const data = snapshot.val();
-      const temp = data.temperature;
-      const humidity = data.humidity;
-      const light = data.light;
+      const dataObj = snapshot.val();
+      const keys = Object.keys(dataObj);
+      const lastKey = keys[0];
+      const record = dataObj[lastKey];
 
-      checkLowTemp(temp);
-      checkHighHumidity(humidity);
-      checkLowLight(light);
-      checkHighTemp(temp);
+      const readingTime = record.timestamp ?? null;
+
+      checkLowTemp(record.temperature, readingTime);
+      checkHighHumidity(record.humidity, readingTime);
+      checkLowLight(record.light, readingTime);
+      checkHighTemp(record.temp, readingTime);
     });
 
     return () => unsubscribe();
@@ -88,80 +93,85 @@ export default function StatusScreen() {
     lastLowTempNotify, // re-run if these states change
     lastHighHumidNotify,
     lastLowLightNotify,
+    lastHighTempNotify
   ]);
 
   // Notification sensor value checks
-  function checkLowTemp(temp: number) {
-    if (temp < 10 && hasDayPassedSince(lastLowTempNotify)) {
-      Notifications.scheduleNotificationAsync({
-        content: {
-          title: "Low Temperature",
-          body: `${
-            lastReadingTime
-              ? formatReadingTime(lastReadingTime)
-              : "Unknown time"
-          }: Temperature is only ${temp.toFixed(1)} °C!`,
-          data: { sensor: "temperature" },
-        },
-        trigger: null,
-      });
-      setLastLowTempNotify(Date.now());
+  function checkLowTemp(temp: number, readingTime: number | null) {
+      console.log(`checkLowTemp called. Value = ${temp}`);
+      if (temp < 10 && hasDayPassedSince(lastLowTempNotify)) {
+        Notifications.scheduleNotificationAsync({
+          content: {
+            title: "Low Temperature",
+            body: `${
+              readingTime
+                ? formatReadingTime(readingTime)
+                : "Unknown time"
+            }: Temperature is only ${temp.toFixed(1)} °C!`,
+            data: { sensor: "temperature" },
+          },
+          trigger: null,
+        });
+        setLastLowTempNotify(Date.now());
+      }
     }
-  }
 
-  function checkHighTemp(temp: number) {
-    if (temp > 30 && hasDayPassedSince(lastLowTempNotify)) {
-      Notifications.scheduleNotificationAsync({
-        content: {
-          title: "High Temperature",
-          body: `${
-            lastReadingTime
-              ? formatReadingTime(lastReadingTime)
-              : "Unknown time"
-          }: Temperature is over ${temp.toFixed(1)} °C!`,
-          data: { sensor: "temperature" },
-        },
-        trigger: null,
-      });
-      setLastLowTempNotify(Date.now());
+  function checkHighTemp(temp: number, readingTime: number | null) {
+      console.log(`checkHighTemp called. Value = ${temp}`);
+      if (temp > 50 && hasDayPassedSince(lastLowTempNotify)) {
+        Notifications.scheduleNotificationAsync({
+          content: {
+            title: "High Temperature",
+            body: `${
+              readingTime
+                ? formatReadingTime(readingTime)
+                : "Unknown time"
+            }: Temperature is over ${temp.toFixed(1)} °C!`,
+            data: { sensor: "temperature" },
+          },
+          trigger: null,
+        });
+        setLastHighTempNotify(Date.now());
+      }
     }
-  }
 
-  function checkHighHumidity(humidity: number) {
-    if (humidity > 80 && hasDayPassedSince(lastHighHumidNotify)) {
-      Notifications.scheduleNotificationAsync({
-        content: {
-          title: "High Humidity",
-          body: `${
-            lastReadingTime
-              ? formatReadingTime(lastReadingTime)
-              : "Unknown time"
-          }: Humidity is at ${humidity.toFixed(1)}%`,
-          data: { sensor: "humidity" },
-        },
-        trigger: null,
-      });
-      setLastHighHumidNotify(Date.now());
+  function checkHighHumidity(humidity: number, readingTime: number | null) {
+      console.log(`checkHighHumidity called. Value = ${humidity}`);
+      if (humidity > 80 && hasDayPassedSince(lastLowTempNotify)) {
+        Notifications.scheduleNotificationAsync({
+          content: {
+            title: "High Humidity",
+            body: `${
+              readingTime
+                ? formatReadingTime(readingTime)
+                : "Unknown time"
+            }: Humidity is at ${humidity.toFixed(1)}%`,
+            data: { sensor: "humidity" },
+          },
+          trigger: null,
+        });
+        setLastHighHumidNotify(Date.now());
+      }
     }
-  }
 
-  function checkLowLight(light: number) {
-    if (light < 100 && hasDayPassedSince(lastLowLightNotify)) {
-      Notifications.scheduleNotificationAsync({
-        content: {
-          title: "Low Light",
-          body: `${
-            lastReadingTime
-              ? formatReadingTime(lastReadingTime)
-              : "Unknown time"
-          }: Light level is only ${light} Lux!`,
-          data: { sensor: "light" },
-        },
-        trigger: null,
-      });
-      setLastLowLightNotify(Date.now());
+  function checkLowLight(light: number, readingTime: number | null) {
+      console.log(`checkLowLight called. Value = ${light}`);
+      if (light < 500 && hasDayPassedSince(lastLowLightNotify)) {
+        Notifications.scheduleNotificationAsync({
+          content: {
+            title: "Low Light",
+            body: `${
+              readingTime
+                ? formatReadingTime(readingTime)
+                : "Unknown time"
+            }: Light level is only ${light} L!`,
+            data: { sensor: "light" },
+          },
+          trigger: null,
+        });
+        setLastLowLightNotify(Date.now());
+      }
     }
-  }
 
   function hasDayPassedSince(lastTime: number | null): boolean {
     if (!lastTime) return true; // never notified
@@ -222,7 +232,7 @@ export default function StatusScreen() {
             <Text variant="headlineSmall">
               {light !== null ? light : "N/A"}
             </Text>
-            {light !== null && <Text variant="bodyMedium">Lux</Text>}
+            {light !== null && <Text variant="bodyMedium">L</Text>}
           </Card.Content>
         </Card>
       </View>
