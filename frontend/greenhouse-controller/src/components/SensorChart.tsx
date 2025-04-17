@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Dimensions, View, StyleSheet } from "react-native";
-import { Button, Text } from "react-native-paper";
+import { Button, SegmentedButtons, Text } from "react-native-paper";
 import { LineChart } from "react-native-chart-kit";
 
 
@@ -63,20 +63,17 @@ export default function SensorChart({
         {title}
       </Text>
 
-      {/* Buttons to switch time range. TODO: Fix styling on these. */}
+      {/* Buttons to switch time range. */}
       <View style={styles.buttonRow}>
-        <Button
-          mode={timeRange === "24h" ? "contained" : "outlined"}
-          onPress={() => setTimeRange("24h")}
-        >
-          24 Hours
-        </Button>
-        <Button
-          mode={timeRange === "7d" ? "contained" : "outlined"}
-          onPress={() => setTimeRange("7d")}
-        >
-          7 Days
-        </Button>
+        <SegmentedButtons
+          value={timeRange} 
+          onValueChange={(val) => setTimeRange(val as TimeRange)}
+          style={{ flex: 1 }}
+          buttons={[
+            { value: "24h", label: "24 Hours" },
+            { value: "7d", label: "7 Days" },
+          ]}
+        />
       </View>
 
       {!hasValidData ? (
@@ -115,9 +112,9 @@ export default function SensorChart({
               barPercentage: 1,
               useShadowColorFromDataset: false,
               propsForBackgroundLines: {
-                strokeWidth: 0, 
+                strokeWidth: 0,
               },
-              decimalPlaces: 0
+              decimalPlaces: 0,
             }}
             bezier
             style={{ marginVertical: 8, borderRadius: 16 }}
