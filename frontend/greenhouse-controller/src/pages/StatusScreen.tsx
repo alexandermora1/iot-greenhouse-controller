@@ -184,62 +184,106 @@ export default function StatusScreen() {
     <SafeAreaView style={{ padding: 8, flex: 1 }}>
       <View style={styles.profileContainer}>
         <Avatar.Image
-          size={64}
+          size={80}
           source={require("../../assets/alex_avatar.jpeg")}
         />
-        <Text style={{ marginTop: 8 }}>Hello Alex!</Text>
+        <Text variant="headlineSmall" style={{ marginTop: 8 }}>Hello Alex!</Text>
       </View>
 
       <View style={styles.sensorRow}>
         {/* Temperature Card */}
         <Card
           mode="contained"
-          style={styles.sensorCard}
+          style={[
+            styles.sensorCard,
+            { backgroundColor: SENSOR_COLORS.temperature },
+          ]}
           onPress={() => navigation.navigate("Temperature")}
         >
           <Card.Content style={styles.sensorCardContent}>
-            <MaterialCommunityIcons name="thermometer" size={32} />
-            <Text variant="headlineSmall">
+            <MaterialCommunityIcons
+              name="thermometer"
+              size={32}
+              color={contrastText(SENSOR_COLORS.temperature)}
+            />
+            <Text
+              variant="headlineSmall"
+              style={{ color: contrastText(SENSOR_COLORS.temperature) }}
+            >
               {temperature !== null ? temperature.toFixed(1) : "N/A"}
             </Text>
-            {temperature !== null && <Text variant="bodyMedium">°C</Text>}
+            {temperature !== null && (
+              <Text
+                variant="bodyMedium"
+                style={{ color: contrastText(SENSOR_COLORS.temperature) }}
+              >
+                °C
+              </Text>
+            )}
           </Card.Content>
         </Card>
 
         {/* Humidity Card */}
         <Card
           mode="contained"
-          style={styles.sensorCard}
+          style={[
+            styles.sensorCard,
+            { backgroundColor: SENSOR_COLORS.humidity },
+          ]}
           onPress={() => navigation.navigate("Humidity")}
         >
           <Card.Content style={styles.sensorCardContent}>
-            <MaterialCommunityIcons name="water-percent" size={32} />
-            <Text variant="headlineSmall">
+            <MaterialCommunityIcons
+              name="water-percent"
+              size={32}
+              color={contrastText(SENSOR_COLORS.humidity)}
+            />
+            <Text
+              variant="headlineSmall"
+              style={{ color: contrastText(SENSOR_COLORS.humidity) }}
+            >
               {humidity !== null ? humidity.toFixed(1) : "N/A"}
             </Text>
-            {humidity !== null && <Text variant="bodyMedium">%</Text>}
+            {humidity !== null && (
+              <Text
+                variant="bodyMedium"
+                style={{ color: contrastText(SENSOR_COLORS.humidity) }}
+              >
+                %
+              </Text>
+            )}
           </Card.Content>
         </Card>
 
         {/* Light Card */}
         <Card
           mode="contained"
-          style={styles.sensorCard}
+          style={[styles.sensorCard, { backgroundColor: SENSOR_COLORS.light }]}
           onPress={() => navigation.navigate("Light")}
         >
           <Card.Content style={styles.sensorCardContent}>
             <MaterialCommunityIcons name="lightbulb-on" size={32} />
-            <Text variant="headlineSmall">
+            <Text
+              variant="headlineSmall"
+              style={{ color: contrastText(SENSOR_COLORS.light) }}
+            >
               {light !== null ? light : "N/A"}
             </Text>
-            {light !== null && <Text variant="bodyMedium">L</Text>}
+            {light !== null && (
+              <Text
+                variant="bodyMedium"
+                style={{ color: contrastText(SENSOR_COLORS.light) }}
+              >
+                L
+              </Text>
+            )}
           </Card.Content>
         </Card>
       </View>
 
       {/* Show last reading time if present */}
       {lastReadingTime && (
-        <View style={{ marginTop: 16 }}>
+        <View style={{ marginTop: 16, margin: 4 }}>
           <Text variant="bodyLarge">
             Last sensor update: {formatReadingTime(lastReadingTime)}
           </Text>
@@ -248,12 +292,11 @@ export default function StatusScreen() {
 
       {/* Notifications */}
       <ScrollView style={{ flex: 1, margin: 4, marginTop: 36 }}>
-        
         {/* Heading */}
         <Text style={{ marginBottom: 8 }} variant="titleLarge">
           Notifications
         </Text>
-        
+
         {/* Notification cards */}
         {notifications.map((notif, index) => (
           <Card key={index} style={{ marginBottom: 8 }}>
@@ -264,17 +307,36 @@ export default function StatusScreen() {
           </Card>
         ))}
       </ScrollView>
-
     </SafeAreaView>
   );
 }
+
+
+// temperature → orange, humidity → blue, light → grey/white
+const SENSOR_COLORS = {
+  temperature: "#ff9d00",
+  humidity: "#00ddff",
+  light: "#FFFFFF", // very‑light grey so the white icon is still visible
+};
+
+// returns black for light backgrounds, white for dark
+function contrastText(hex: string) {
+  const c = hex.replace('#', '');
+  const r = parseInt(c.substr(0, 2), 16);
+  const g = parseInt(c.substr(2, 2), 16);
+  const b = parseInt(c.substr(4, 2), 16);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.5 ? '#000' : '#fff';
+}
+
+
 
 const styles = StyleSheet.create({
   profileContainer: {
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 24,
-    marginBottom: 24,
+    marginTop: 8,
+    marginBottom: 36,
   },
   sensorRow: {
     flexDirection: "row",

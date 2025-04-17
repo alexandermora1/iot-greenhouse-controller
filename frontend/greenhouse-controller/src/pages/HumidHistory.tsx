@@ -20,11 +20,11 @@ export default function HumidityHistory() {
       <SensorChart
         title="Humidity History"
         unit="%"
-        color="#3399FF" 
-        backgroundColor="#3399FF"
+        color="#00ddff"
+        backgroundColor="#00ddff"
         records={records}
         getValue={(r) => r.humidity}
-        maxYValue={100} 
+        maxYValue={100}
       />
 
       {/* Notifications */}

@@ -26,7 +26,7 @@ export const LoginScreen = () => {
         <Text variant="headlineMedium" style={styles.title}>
           Greenhouse Login
         </Text>
-        
+
         <TextInput
           label="Email"
           value={email}
@@ -34,7 +34,7 @@ export const LoginScreen = () => {
           autoCapitalize="none"
           style={styles.input}
         />
-        
+
         <TextInput
           label="Password"
           value={password}
@@ -49,6 +49,7 @@ export const LoginScreen = () => {
           mode="contained"
           onPress={handleLogin}
           style={styles.button}
+          buttonColor="#FFFFFF"
         >
           Login
         </Button>

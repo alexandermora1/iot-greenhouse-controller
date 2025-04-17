@@ -60,8 +60,8 @@ export default function SensorChart({
   const hasValidData = values.length > 0;
 
   // Background color gradient
-  const backgroundColorFrom = backgroundColor ? shift(backgroundColor, -55) : "#014c52"; // darker
-  const backgroundColorTo = backgroundColor ? shift(backgroundColor, -15) : "#007982"; // lighter
+  const backgroundColorFrom = backgroundColor ? shift(backgroundColor, -50) : "#014c52"; // darker
+  const backgroundColorTo = backgroundColor ? shift(backgroundColor, -10) : "#007982"; // lighter
 
   const baseTheme = useTheme();
   const buttonsTheme: MD3Theme = {
@@ -123,11 +123,11 @@ export default function SensorChart({
             fromZero
             chartConfig={{
               backgroundGradientFrom: backgroundColorFrom,
-              backgroundGradientFromOpacity: 0.6,
+              backgroundGradientFromOpacity: 0.4,
               backgroundGradientTo: backgroundColorTo,
-              backgroundGradientToOpacity: 0.6,
+              backgroundGradientToOpacity: 0.7,
               color: (opacity = 1) => color, // line color
-              strokeWidth: 3,
+              strokeWidth: 4,
               barPercentage: 1,
               useShadowColorFromDataset: false,
               propsForBackgroundLines: {
@@ -140,10 +140,11 @@ export default function SensorChart({
           />
 
           {/* Textual summary to assist visually impaired users */}
-          <View style={{ marginTop: 8 }}>
+          <View style={{ marginTop: 8, justifyContent: "center", alignItems: "center" }}>
             {min != null && max != null && avg != null ? (
               <Text
-                variant="bodyMedium"
+                  variant="headlineSmall"
+                  style={{ fontSize: 14 }}
                 accessibilityLabel={`${title} Summary`}
               >
                 Highest: {max.toFixed(1)} {unit} | Lowest: {min.toFixed(1)}{" "}
@@ -159,7 +160,7 @@ export default function SensorChart({
   );
 }
 
-// Helper: filter by time range
+// Filter by time range
 function filterByRange(records: HistoryRecord[], range: "24h" | "7d") {
   const now = Math.floor(Date.now() / 1000);
   let cutoff = now - 24 * 3600;
@@ -169,7 +170,7 @@ function filterByRange(records: HistoryRecord[], range: "24h" | "7d") {
   return records.filter((r) => r.timestamp >= cutoff);
 }
 
-// Helper: Format timestamps differently for 24h vs 7d
+// Format timestamps differently for 24h vs 7d
 function formatTimestamp(ts: number, range: "24h" | "7d") {
   const date = new Date(ts * 1000);
   if (range === "24h") {
@@ -217,7 +218,7 @@ function contrastText(hex: string) {
   const r = parseInt(c.substr(0, 2), 16);
   const g = parseInt(c.substr(2, 2), 16);
   const b = parseInt(c.substr(4, 2), 16);
-  // perceptual luminance (ITU BT.601)
+  
   const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
   return luminance > 0.5 ? "#000" : "#fff"; // light bg → black text
 }
