@@ -22,13 +22,14 @@ export default function TempHistory() {
         title="Temperature History"
         unit="°C"
         color="#FF9900" // orange color
+        backgroundColor="#FF9900"
         records={records}
         getValue={(r) => r.temperature}
         maxYValue={50}
       />
 
       {/* Notifications */}
-      <ScrollView style={{ margin: 4, marginTop: 36 }}>
+      <ScrollView style={{ margin: 16, marginTop: 36 }}>
         {/* Heading */}
         <Text style={{ marginBottom: 8 }} variant="titleLarge">
           Notifications

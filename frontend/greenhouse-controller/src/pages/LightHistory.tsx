@@ -20,14 +20,15 @@ export default function LightHistory() {
       <SensorChart
         title="Light History"
         unit="L"
-        color="#FFFFFF" // white
+        color="#FFFFFF"
+        backgroundColor="#FFFFFF"
         records={records}
         getValue={(r) => r.light}
         maxYValue={10000}
       />
 
       {/* Notifications */}
-      <ScrollView style={{ margin: 4, marginTop: 36 }}>
+      <ScrollView style={{ margin: 16, marginTop: 36 }}>
         {/* Heading */}
         <Text style={{ marginBottom: 8 }} variant="titleLarge">
           Notifications

@@ -20,14 +20,15 @@ export default function HumidityHistory() {
       <SensorChart
         title="Humidity History"
         unit="%"
-        color="#3399FF" // blue
+        color="#3399FF" 
+        backgroundColor="#3399FF"
         records={records}
         getValue={(r) => r.humidity}
-        maxYValue={100} // or whatever max humidity is
+        maxYValue={100} 
       />
 
       {/* Notifications */}
-      <ScrollView style={{ margin: 4, marginTop: 36 }}>
+      <ScrollView style={{ margin: 16, marginTop: 36 }}>
         {/* Heading */}
         <Text style={{ marginBottom: 8 }} variant="titleLarge">
           Notifications
