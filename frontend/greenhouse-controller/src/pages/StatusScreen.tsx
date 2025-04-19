@@ -85,7 +85,6 @@ export default function StatusScreen() {
       checkLowTemp(record.temperature, readingTime);
       checkHighHumidity(record.humidity, readingTime);
       checkLowLight(record.light, readingTime);
-      checkHighTemp(record.temp, readingTime);
     });
 
     return () => unsubscribe();
@@ -113,25 +112,6 @@ export default function StatusScreen() {
           trigger: null,
         });
         setLastLowTempNotify(Date.now());
-      }
-    }
-
-  function checkHighTemp(temp: number, readingTime: number | null) {
-      console.log(`checkHighTemp called. Value = ${temp}`);
-      if (temp > 50 && hasDayPassedSince(lastLowTempNotify)) {
-        Notifications.scheduleNotificationAsync({
-          content: {
-            title: "High Temperature",
-            body: `${
-              readingTime
-                ? formatReadingTime(readingTime)
-                : "Unknown time"
-            }: Temperature is over ${temp.toFixed(1)} °C!`,
-            data: { sensor: "temperature" },
-          },
-          trigger: null,
-        });
-        setLastHighTempNotify(Date.now());
       }
     }
 
