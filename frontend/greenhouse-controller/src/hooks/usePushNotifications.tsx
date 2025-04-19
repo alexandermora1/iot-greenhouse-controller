@@ -1,97 +1,117 @@
+// usePushNotifications.ts
 import { useState, useEffect, useRef } from "react";
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
 import Constants from "expo-constants";
 import { Platform } from "react-native";
+import * as SecureStore from "expo-secure-store";
 
-// Code based on this tutorial: https://www.youtube.com/watch?v=V-hois8dgM4
 
+// Types                                                                    
 export interface PushNotificationState {
   expoPushToken?: Notifications.ExpoPushToken;
-  notifications?: Notifications.Notification[];
+  notifications: Notifications.Notification[];
 }
 
+
+// Helpers for secure persistence                                           
+const STORAGE_KEY = "@notifications";
+
+// Read notifications from Secure Store on launch
+async function loadStored(): Promise<Notifications.Notification[]> {
+  try {
+    const json = await SecureStore.getItemAsync(STORAGE_KEY);
+    return json ? JSON.parse(json) : [];
+  } catch {
+    return [];
+  }
+}
+
+// Write notifications array to Secure Store 
+async function store(notifs: Notifications.Notification[]) {
+  try {
+    await SecureStore.setItemAsync(STORAGE_KEY, JSON.stringify(notifs));
+  } catch {
+    console.log("Secure store write error");
+  }
+}
+
+
+// Hook
 export const usePushNotifications = (): PushNotificationState => {
-  const [expoPushToken, setExpoPushToken] = useState<Notifications.ExpoPushToken | undefined>();
-  const [notifications, setNotifications] = useState<Notifications.Notification[]>([]);
+  const [expoPushToken, setExpoPushToken] =
+    useState<Notifications.ExpoPushToken>();
+  const [notifications, setNotifications] = useState<
+    Notifications.Notification[]
+  >([]);
 
-  const notificationsListener = useRef<Notifications.EventSubscription>();
-  const responseListener = useRef<Notifications.EventSubscription>();
+  useEffect(() => {
+    loadStored().then(setNotifications);
+  }, []);
 
-  Notifications.setNotificationHandler({
-    handleNotification: async () => ({
-      shouldPlaySound: false,
-      shouldShowAlert: true,
-      shouldSetBadge: false,
-    }),
-  });
+  useEffect(() => {
+    registerForPushNotificationsAsync().then(setExpoPushToken);
 
-  async function registerForPushNotificationsAsync() {
-    let token;
-
-    if (Device.isDevice) {
-      const { status: existingStatus } = await Notifications.getPermissionsAsync();
-
-      let finalStatus = existingStatus;
-
-      if (existingStatus !== "granted") {
-        const { status } = await Notifications.requestPermissionsAsync();
-        finalStatus = status;
+    const foregroundSub = Notifications.addNotificationReceivedListener(
+      (notif) => {
+        setNotifications((prev) => {
+          const updated = [...prev, notif];
+          store(updated);
+          return updated;
+        });
       }
-      if (finalStatus !== "granted") {
-        alert("Failed to get push token");
+    );
+
+    const tapSub = Notifications.addNotificationResponseReceivedListener(
+      (resp) => {
+        console.log("User tapped notification", resp);
       }
+    );
 
-      token = await Notifications.getExpoPushTokenAsync({
-        projectId: Constants.expoConfig?.extra?.eas?.projectId,
-      });
-    } else {
-      console.log("ERROR: Please use physical device");
-    }
+    return () => {
+      foregroundSub.remove();
+      tapSub.remove();
+    };
+  }, []);
 
-    if (Platform.OS === "android") {
-      Notifications.setNotificationChannelAsync("default", {
-        name: "default",
-        importance: Notifications.AndroidImportance.MAX,
-        vibrationPattern: [0, 250, 250, 250],
-        lightColor: "#FF231F7C",
-      });
-    }
+  return { expoPushToken, notifications };
+};
 
-    return token;
+
+/* Permission + channel helper */
+
+async function registerForPushNotificationsAsync() {
+  let token: Notifications.ExpoPushToken | undefined;
+
+  if (!Device.isDevice) {
+    console.log("Push notifications require a physical device");
+    return undefined;
   }
 
+  const { status: existingStatus } = await Notifications.getPermissionsAsync();
+  let finalStatus = existingStatus;
 
-    useEffect(() => {
-      registerForPushNotificationsAsync().then((token) => {
-        setExpoPushToken(token);
-      });
+  if (existingStatus !== "granted") {
+    const { status } = await Notifications.requestPermissionsAsync();
+    finalStatus = status;
+  }
+  if (finalStatus !== "granted") {
+    alert("Failed to get push‑token permissions!");
+    return undefined;
+  }
 
-      notificationsListener.current =
-        Notifications.addNotificationReceivedListener((notification) => {
-         setNotifications((old) => [...old, notification]);
-        });
+  token = await Notifications.getExpoPushTokenAsync({
+    projectId: Constants.expoConfig?.extra?.eas?.projectId,
+  });
 
-      responseListener.current = Notifications.addNotificationResponseReceivedListener((response) => {
-        console.log("User tapped the notification:", response);
-      });
+  if (Platform.OS === "android") {
+    await Notifications.setNotificationChannelAsync("default", {
+      name: "default",
+      importance: Notifications.AndroidImportance.MAX,
+      vibrationPattern: [0, 250, 250, 250],
+      lightColor: "#FF231F7C",
+    });
+  }
 
-      return () => {
-        if (notificationsListener.current) {
-          Notifications.removeNotificationSubscription(
-            notificationsListener.current
-          );
-        }
-        if (responseListener.current) {
-          Notifications.removeNotificationSubscription(
-            responseListener.current
-          );
-        }
-      };
-    }, [])
-
-    return {
-      expoPushToken,
-      notifications,
-    };
-  };
+  return token;
+}
