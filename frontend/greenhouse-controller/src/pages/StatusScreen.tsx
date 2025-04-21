@@ -19,7 +19,6 @@ export default function StatusScreen() {
   const [light, setLight] = useState<number | null>(null);
   const [lastReadingTime, setLastReadingTime] = useState<number | null>(null);
   const [lastLowTempNotify, setLastLowTempNotify] = useState<number | null>(null);
-  const [lastHighTempNotify, setLastHighTempNotify] = useState<number | null>(null);
   const [lastHighHumidNotify, setLastHighHumidNotify] = useState<number | null>(null);
   const [lastLowLightNotify, setLastLowLightNotify] = useState<number | null>(null);
 
@@ -92,7 +91,6 @@ export default function StatusScreen() {
     lastLowTempNotify, // re-run if these states change
     lastHighHumidNotify,
     lastLowLightNotify,
-    lastHighTempNotify
   ]);
 
   // Notification sensor value checks
@@ -154,7 +152,7 @@ export default function StatusScreen() {
     }
 
   function hasDayPassedSince(lastTime: number | null): boolean {
-    if (!lastTime) return true; // never notified
+    if (!lastTime) return true; 
     const ONE_DAY = 24 * 60 * 60 * 1000;
     return Date.now() - lastTime >= ONE_DAY;
   }
@@ -166,14 +164,23 @@ export default function StatusScreen() {
         <Avatar.Image
           size={80}
           source={require("../../assets/alex_avatar.jpeg")}
+          accessibilityLabel="Profile picture"
         />
-        <Text variant="headlineSmall" style={{ marginTop: 8 }}>Hello Alex!</Text>
+        <Text
+          variant="headlineSmall"
+          style={{ marginTop: 8 }}
+          accessibilityRole="header"
+        >
+          Hello Alex!
+        </Text>
       </View>
 
       <View style={styles.sensorRow}>
         {/* Temperature Card */}
         <Card
           mode="contained"
+          accessibilityRole="button"
+          accessibilityLabel={`Current temperature: ${temperature}°C. Double‑tap for details.`}
           style={[
             styles.sensorCard,
             { backgroundColor: SENSOR_COLORS.temperature },
@@ -185,6 +192,7 @@ export default function StatusScreen() {
               name="thermometer"
               size={32}
               color={contrastText(SENSOR_COLORS.temperature)}
+              importantForAccessibility="no-hide-descendants"
             />
             <Text
               variant="headlineSmall"
@@ -206,6 +214,8 @@ export default function StatusScreen() {
         {/* Humidity Card */}
         <Card
           mode="contained"
+          accessibilityRole="button"
+          accessibilityLabel={`Current humidity: ${humidity}%. Double‑tap for details.`}
           style={[
             styles.sensorCard,
             { backgroundColor: SENSOR_COLORS.humidity },
@@ -217,6 +227,7 @@ export default function StatusScreen() {
               name="water-percent"
               size={32}
               color={contrastText(SENSOR_COLORS.humidity)}
+              importantForAccessibility="no-hide-descendants"
             />
             <Text
               variant="headlineSmall"
@@ -238,11 +249,18 @@ export default function StatusScreen() {
         {/* Light Card */}
         <Card
           mode="contained"
+          accessibilityRole="button"
+          accessibilityLabel={`Current light: ${light}L. Double‑tap for details.`}
           style={[styles.sensorCard, { backgroundColor: SENSOR_COLORS.light }]}
           onPress={() => navigation.navigate("Light")}
         >
           <Card.Content style={styles.sensorCardContent}>
-            <MaterialCommunityIcons name="lightbulb-on" size={32} />
+            <MaterialCommunityIcons
+              name="lightbulb-on"
+              size={32}
+              color={contrastText(SENSOR_COLORS.light)}
+              importantForAccessibility="no-hide-descendants"
+            />
             <Text
               variant="headlineSmall"
               style={{ color: contrastText(SENSOR_COLORS.light) }}
@@ -273,7 +291,11 @@ export default function StatusScreen() {
       {/* Notifications */}
       <ScrollView style={{ flex: 1, margin: 4, marginTop: 36 }}>
         {/* Heading */}
-        <Text style={{ marginBottom: 8 }} variant="titleLarge">
+        <Text
+          style={{ marginBottom: 8 }}
+          variant="titleLarge"
+          accessibilityRole="header"
+        >
           Notifications
         </Text>
 

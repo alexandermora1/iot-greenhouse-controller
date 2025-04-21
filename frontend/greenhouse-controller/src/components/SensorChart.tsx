@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Dimensions, View, StyleSheet } from "react-native";
-import { Button, MD3Theme, SegmentedButtons, Text, useTheme } from "react-native-paper";
+import { MD3Theme, SegmentedButtons, Text, useTheme } from "react-native-paper";
 import { LineChart } from "react-native-chart-kit";
 
 
@@ -35,20 +35,15 @@ export default function SensorChart({
 }: SensorChartProps) {
   const [timeRange, setTimeRange] = useState<TimeRange>("24h");
 
-  // 1) Filter records by time range
+  // Data prep
   const filtered = filterByRange(records, timeRange);
-
-  // 2) Build numeric arrays
   const timestamps = filtered.map((r) => r.timestamp);
   const values = filtered.map((r) => getValue(r));
-
-  // 3) Compute summary stats
   const { min, max, avg } = getSummaryStats(values);
-
-  // 4) Create chart labels
   const labelStrings = timestamps.map((ts) => formatTimestamp(ts, timeRange));
+  const hasValidData = values.length > 0;
 
-  // 5) Possibly skip some labels if large dataset
+  // Possibly skip some labels if large dataset
   function getFormattedLabels() {
     if (labelStrings.length <= 5) {
       return labelStrings;
@@ -57,8 +52,8 @@ export default function SensorChart({
     return labelStrings.map((lbl, i) => (i % step === 0 ? lbl : ""));
   }
 
-  const hasValidData = values.length > 0;
-
+  
+  // Theme adjustments
   // Background color gradient
   const backgroundColorFrom = backgroundColor ? shift(backgroundColor, -50) : "#014c52"; // darker
   const backgroundColorTo = backgroundColor ? shift(backgroundColor, -10) : "#007982"; // lighter
@@ -69,15 +64,20 @@ export default function SensorChart({
     colors: {
       ...baseTheme.colors,
       secondaryContainer: color, // selected background
-      onSecondaryContainer: contrastText(color), // selected text/icon
+      onSecondaryContainer: contrastText(color), // makes sure text is readable (enough contrast)
       outline: color, // border & un‑selected label
     },
   };
 
   return (
-    <View style={styles.container}>
+    <View
+      style={styles.container}
+      accessible
+      accessibilityRole="summary"
+      accessibilityLabel={`${title} charts and statistics. Shows sensor values for last twenty‑four hours or seven days. Textual summary of important values below chart.`}
+    >
       {/* Title */}
-      <Text variant="headlineSmall" style={styles.title}>
+      <Text variant="headlineSmall" style={styles.title} accessibilityRole="header">
         {title}
       </Text>
 
@@ -88,8 +88,16 @@ export default function SensorChart({
           onValueChange={(val) => setTimeRange(val as TimeRange)}
           style={{ flex: 1 }}
           buttons={[
-            { value: "24h", label: "24 Hours" },
-            { value: "7d", label: "7 Days" },
+            {
+              value: "24h",
+              label: "24 Hours",
+              accessibilityLabel: "Show last twenty‑four hours",
+            },
+            {
+              value: "7d",
+              label: "7 Days",
+              accessibilityLabel: "Show last seven days",
+            },
           ]}
           theme={buttonsTheme}
         />
@@ -100,52 +108,60 @@ export default function SensorChart({
       ) : (
         <>
           {/* The chart */}
-          <LineChart
-            data={{
-              labels: getFormattedLabels(),
-              datasets: [
-                {
-                  data: values.length > 0 ? values : [0],
-                  withDots: false,
-                  color: (opacity = 1) => color, // use the chart color
-                  strokeWidth: 3,
+          <View importantForAccessibility="no-hide-descendants" accessible={false} /* Makes screen readers skip chart */ >           
+            <LineChart
+              data={{
+                labels: getFormattedLabels(),
+                datasets: [
+                  {
+                    data: values.length > 0 ? values : [0],
+                    withDots: false,
+                    color: (opacity = 1) => color, // use the chart color
+                    strokeWidth: 3,
+                  },
+                  {
+                    // "Dummy" dataset if there is a need to push the y-axis
+                    data: [maxYValue],
+                    withDots: false,
+                    color: () => "rgba(0,0,0,0)",
+                  },
+                ],
+              }}
+              width={Dimensions.get("window").width - 32}
+              height={220}
+              fromZero
+              chartConfig={{
+                backgroundGradientFrom: backgroundColorFrom,
+                backgroundGradientFromOpacity: 0.4,
+                backgroundGradientTo: backgroundColorTo,
+                backgroundGradientToOpacity: 0.7,
+                color: (opacity = 1) => color, // line color
+                strokeWidth: 4,
+                barPercentage: 1,
+                useShadowColorFromDataset: false,
+                propsForBackgroundLines: {
+                  strokeWidth: 0,
                 },
-                {
-                  // "Dummy" dataset if there is a need to push the y-axis
-                  data: [maxYValue],
-                  withDots: false,
-                  color: () => "rgba(0,0,0,0)",
-                },
-              ],
-            }}
-            width={Dimensions.get("window").width - 32}
-            height={220}
-            fromZero
-            chartConfig={{
-              backgroundGradientFrom: backgroundColorFrom,
-              backgroundGradientFromOpacity: 0.4,
-              backgroundGradientTo: backgroundColorTo,
-              backgroundGradientToOpacity: 0.7,
-              color: (opacity = 1) => color, // line color
-              strokeWidth: 4,
-              barPercentage: 1,
-              useShadowColorFromDataset: false,
-              propsForBackgroundLines: {
-                strokeWidth: 0,
-              },
-              decimalPlaces: 0,
-            }}
-            bezier
-            style={{ marginVertical: 8, borderRadius: 16 }}
-          />
+                decimalPlaces: 0,
+              }}
+              bezier
+              style={{ marginVertical: 8, borderRadius: 16 }}
+            />
+          </View>
 
           {/* Textual summary to assist visually impaired users */}
-          <View style={{ marginTop: 8, justifyContent: "center", alignItems: "center" }}>
+          <View
+            style={{
+              marginTop: 8,
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
             {min != null && max != null && avg != null ? (
               <Text
-                  variant="headlineSmall"
-                  style={{ fontSize: 14 }}
-                accessibilityLabel={`${title} Summary`}
+                variant="headlineSmall"
+                style={{ fontSize: 14 }}
+                accessibilityLabel={`${title} summary`}
               >
                 Highest: {max.toFixed(1)} {unit} | Lowest: {min.toFixed(1)}{" "}
                 {unit} | Average: {avg.toFixed(1)} {unit}

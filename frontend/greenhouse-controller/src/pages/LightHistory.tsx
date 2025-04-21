@@ -30,7 +30,11 @@ export default function LightHistory() {
       {/* Notifications */}
       <ScrollView style={{ margin: 16, marginTop: 36 }}>
         {/* Heading */}
-        <Text style={{ marginBottom: 8 }} variant="titleLarge">
+        <Text
+          style={{ marginBottom: 8 }}
+          variant="titleLarge"
+          accessibilityRole="header"
+        >
           Notifications
         </Text>
 
