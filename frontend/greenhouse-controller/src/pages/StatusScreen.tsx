@@ -310,7 +310,7 @@ export default function StatusScreen() {
 
 // temperature → orange, humidity → blue, light → grey/white
 const SENSOR_COLORS = {
-  temperature: "#ff9d00",
+  temperature: "#f75f00",
   humidity: "#00ddff",
   light: "#FFFFFF", // very‑light grey so the white icon is still visible
 };

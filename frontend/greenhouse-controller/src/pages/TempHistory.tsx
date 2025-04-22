@@ -21,8 +21,8 @@ export default function TempHistory() {
       <SensorChart
         title="Temperature History"
         unit="°C"
-        color="#ff9d00" // orange color
-        backgroundColor="#ff9d00"
+        color="#f75f00" // orange color
+        backgroundColor="#f75f00"
         records={records}
         getValue={(r) => r.temperature}
         maxYValue={50}
