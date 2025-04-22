@@ -126,7 +126,7 @@ void loop() {
 
   // Read SHT31 and offset incorrect temperature value
   float measuredTemp = sht31.readTemperature();
-  float calibrationOffset = -4.0; //Subtract 4 degrees
+  float calibrationOffset = -8.0; //Subtract 8 degrees
   float t = measuredTemp + calibrationOffset;
   float h = sht31.readHumidity();
 

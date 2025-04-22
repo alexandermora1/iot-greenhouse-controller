@@ -99,12 +99,10 @@ export default function StatusScreen() {
       if (temp < 10 && hasDayPassedSince(lastLowTempNotify)) {
         Notifications.scheduleNotificationAsync({
           content: {
-            title: "Low Temperature",
+            title: "Heater switched on",
             body: `${
-              readingTime
-                ? formatReadingTime(readingTime)
-                : "Unknown time"
-            }: Temperature is only ${temp.toFixed(1)} °C!`,
+              readingTime ? formatReadingTime(readingTime) : "Unknown time"
+            }: Heater ON – greenhouse is cold (${temp.toFixed(1)} °C)`,
             data: { sensor: "temperature" },
           },
           trigger: null,
@@ -115,15 +113,13 @@ export default function StatusScreen() {
 
   function checkHighHumidity(humidity: number, readingTime: number | null) {
       console.log(`checkHighHumidity called. Value = ${humidity}`);
-      if (humidity > 80 && hasDayPassedSince(lastLowTempNotify)) {
+      if (humidity > 80 && hasDayPassedSince(lastHighHumidNotify)) {
         Notifications.scheduleNotificationAsync({
           content: {
-            title: "High Humidity",
+            title: "Ventilation opened",
             body: `${
-              readingTime
-                ? formatReadingTime(readingTime)
-                : "Unknown time"
-            }: Humidity is at ${humidity.toFixed(1)}%`,
+              readingTime ? formatReadingTime(readingTime) : "Unknown time"
+            }: Ventilation OPENED – humidity high (${humidity.toFixed(1)}%)`,
             data: { sensor: "humidity" },
           },
           trigger: null,
@@ -134,15 +130,13 @@ export default function StatusScreen() {
 
   function checkLowLight(light: number, readingTime: number | null) {
       console.log(`checkLowLight called. Value = ${light}`);
-      if (light < 500 && hasDayPassedSince(lastLowLightNotify)) {
+      if (light < 200 && hasDayPassedSince(lastLowLightNotify)) {
         Notifications.scheduleNotificationAsync({
           content: {
-            title: "Low Light",
+            title: "Grow‑lights on",
             body: `${
-              readingTime
-                ? formatReadingTime(readingTime)
-                : "Unknown time"
-            }: Light level is only ${light} L!`,
+              readingTime ? formatReadingTime(readingTime) : "Unknown time"
+            }: Grow‑lights ON – low daylight ${light} L)`,
             data: { sensor: "light" },
           },
           trigger: null,
