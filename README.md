@@ -17,42 +17,49 @@ The IoT Greenhouse Controller aims to:
 - Collect real-time data on temperature, humidity, and light using an ESP32-S3-MINI-1 microcontroller with a SHT-31 sensor for temperature/humidity and an LTR329ALS sensor for light.
 - Send the collected data to a Firebase Realtime Database for storage and synchronization.
 - Provide a React Native mobile application (built with Expo) to display both real-time and historical sensor readings.
-- Simulate control actions by sending push notifications (via Pushsafer) when certain thresholds (e.g., low temperature, high humidity) are crossed.
+- Simulate control actions by sending push notifications (via Expo Notifications) when certain thresholds (e.g., low temperature, high humidity) are crossed.
 - Although the prototype does not directly control any physical devices, it simulates actions such as turning lights on/off or adjusting ventilation, illustrating how full automation could be integrated in a future version.  
 <br/>
 
 ## Features
 ### Monitoring
-View temperature, humidity, and light readings from the greenhouse at 15-minute intervals. This approach minimizes data usage while still offering timely insights into changing conditions.
+- View temperature, humidity, and light readings from the greenhouse at 15-minute intervals. This approach minimizes data usage while still offering timely insights into changing conditions.
 
 ### Historical Data Visualization
-Explore trends over time through history charts. This helps you identify patterns or recurring issues in the greenhouse environment.
+- Explore trends over time through history charts. This helps you identify patterns or recurring issues in the greenhouse environment.
+- Summary below charts provides highest, lowest, and average values—optimized for screen reader users.
 
-### Push Notifications
-Receive alerts for conditions that fall outside your configured thresholds (e.g., low light during winter days or extreme temperatures).
+### Push Notifications (simulated automation)
+- Receive alerts for conditions that fall outside your configured thresholds (e.g., low light during winter days or low temperatures).
+- Implemented using **Expo Notifications**, but notifications only show when the app is open (current limitation).
+- No persistent notification history yet; only latest alerts are visible.
 
 ### Accessibility and Universal Design
-Built with a focus on inclusive design to ensure the app can be used by the widest possible audience.
+- Built with a focus on inclusive design to ensure the app can be used by the widest possible audience.
+- High-contrast color logic ensures readable text over sensor cards.
+- Color-coded cards improve usability for users with low vision or dyslexia.
+- Historical charts are screen-reader friendly via accessible labels.
 
 ### Cross-Platform
-Built with React Native and Expo, so the application runs on both Android and iOS devices.  
+- Built with React Native and Expo, so the application runs on both Android and iOS devices.  
 <br/>
 
 ## Technology Stack
 ### Hardware:
 - ESP32-S3-MINI-1
-- SHT-31 Sensor
+- SHT-31 Sensor (temperature/humidity)
 - LTR329ALS Light Sensor
   
 ### Backend & Cloud Services:
 - Firebase Realtime Database
-- Pushsafer for notifications
+- Firebase Authentication
 
 ### Mobile App:
 - React Native and Expo for cross-platform development
   - UI Libraries:
     - React Native Paper for ready-made and accessible UI components
     - react-native-chart-kit for rendering charts of historical data
+    - Expo Notifications (alerts)
 
 ### Programming Languages:
 - C++ for the microcontroller firmware
@@ -65,24 +72,17 @@ Built with React Native and Expo, so the application runs on both Android and iO
     | (SHT-31 &  |                      |  Realtime DB  |
     | LTR329ALS) | <------------------  +---------------+
     +------------+          Sync          |            
-           |                              |           
-           | (Push notifications)         |           
-           v                              |           
-     +-------------+                      |           
-     |  Pushsafer  |                      |           
-     +-------------+                      |           
+                                          |           
                                           v           
-                (User views data & notifications)     
-                          |                       
-                  +-----------------+
-                  | React Native    |
-                  |   Mobile App    |
-                  | (Expo)          |
-                  +-----------------+
+                                      +-----------------+
+                                      | React Native    |
+                                      |   Mobile App    |
+                                      | (Expo)          |
+                                      +-----------------+
 
 - The ESP32 collects data from the sensors and sends it to Firebase.
 - The React Native app retrieves the data from Firebase and displays it in real time and via historical charts.
-- Pushsafer is used to send notifications when certain thresholds are reached.  
+- Expo Notifications is used to send notifications when certain thresholds are reached.  
 <br/>
 
 ## How It Works
