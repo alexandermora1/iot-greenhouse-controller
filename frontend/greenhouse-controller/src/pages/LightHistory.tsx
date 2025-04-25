@@ -9,7 +9,7 @@ export default function LightHistory() {
   const records = useHistoricalData();
   const { notifications } = useNotificationsContext();
 
-  // Filter notifications by sensor type "temperature"
+  // Filter notifications by sensor type "light"
   const lightNotifications = notifications.filter((notif) => {
     const sensor = notif.request.content.data?.sensor;
     return sensor === "light";

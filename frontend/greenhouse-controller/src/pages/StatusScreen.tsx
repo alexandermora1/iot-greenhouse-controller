@@ -130,13 +130,13 @@ export default function StatusScreen() {
 
   function checkLowLight(light: number, readingTime: number | null) {
       console.log(`checkLowLight called. Value = ${light}`);
-      if (light < 200 && hasDayPassedSince(lastLowLightNotify)) {
+      if (light < 500 && hasDayPassedSince(lastLowLightNotify)) {
         Notifications.scheduleNotificationAsync({
           content: {
-            title: "Grow‑lights on",
+            title: "Grow‑lights ON",
             body: `${
               readingTime ? formatReadingTime(readingTime) : "Unknown time"
-            }: Grow‑lights ON – low daylight ${light} L)`,
+            }: Grow‑lights ON – low daylight (${light} L)`,
             data: { sensor: "light" },
           },
           trigger: null,
@@ -308,14 +308,14 @@ export default function StatusScreen() {
 }
 
 
-// temperature → orange, humidity → blue, light → grey/white
+// Temperature → orange, humidity → blue, light → grey/white
 const SENSOR_COLORS = {
   temperature: "#f75f00",
   humidity: "#00ddff",
-  light: "#FFFFFF", // very‑light grey so the white icon is still visible
+  light: "#FFFFFF", 
 };
 
-// returns black for light backgrounds, white for dark
+// Returns black for light backgrounds, white for dark
 function contrastText(hex: string) {
   const c = hex.replace('#', '');
   const r = parseInt(c.substr(0, 2), 16);

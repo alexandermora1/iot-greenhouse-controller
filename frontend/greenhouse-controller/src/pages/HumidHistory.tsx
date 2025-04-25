@@ -9,7 +9,7 @@ export default function HumidityHistory() {
   const records = useHistoricalData();
   const { notifications } = useNotificationsContext();
 
-  // Filter notifications by sensor type "temperature"
+  // Filter notifications by sensor type "humidity"
   const humidNotifications = notifications.filter((notif) => {
     const sensor = notif.request.content.data?.sensor;
     return sensor === "humidity";

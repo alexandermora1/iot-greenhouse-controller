@@ -17,8 +17,8 @@ FirebaseJson json;
 
 // NTP settings
 const char* ntpServer = "no.pool.ntp.org"; // Norwegian NTP server
-const long  gmtOffset_sec = 0;          // adjust for your time zone (e.g., 3600 for GMT+1)
-const int   daylightOffset_sec = 0;     // adjust if you observe daylight savings
+const long  gmtOffset_sec = 0;          
+const int   daylightOffset_sec = 0;     
 
 
 // SHT31 temperature and humidity sensor
@@ -37,7 +37,7 @@ void setup() {
 
   // Initialize SHT31
   Serial.println("Initializing SHT31...");
-  if (!sht31.begin(0x44)) { // Use 0x45 if your sensor has that I2C address
+  if (!sht31.begin(0x44)) { 
     Serial.println("Couldn't find SHT31 sensor!");
     while (1) { delay(1); }
   }
@@ -78,13 +78,13 @@ void setup() {
   config.api_key = FIREBASE_API_KEY;
   config.database_url = FIREBASE_DB_URL;
 
-  /* Assign the callback function for the long running token generation task */
+  // Assign the callback function for the long running token generation task
   config.token_status_callback = tokenStatusCallback;
 
   auth.user.email = FIREBASE_AUTH_EMAIL;     
   auth.user.password = FIREBASE_AUTH_PASSWORD; 
 
-  /* Initialize the library with the Firebase authen and config */
+  // Initialize the library with the Firebase authen and config
   Firebase.begin(&config, &auth);
   Firebase.reconnectWiFi(true);
   
@@ -126,8 +126,8 @@ void loop() {
 
   // Read SHT31 and offset incorrect temperature value
   float measuredTemp = sht31.readTemperature();
-  float calibrationOffset = -8.0; //Subtract 8 degrees
-  float t = measuredTemp + calibrationOffset;
+  float calibrationOffset = 4.0; // 4 degrees to be subtracted
+  float t = measuredTemp - calibrationOffset; 
   float h = sht31.readHumidity();
 
   if (! isnan(t)) {  // check if 'is not a number'
