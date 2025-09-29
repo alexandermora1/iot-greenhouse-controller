@@ -160,7 +160,7 @@ void loop() {
       Serial.print(visible_plus_ir);
       Serial.print("\tCH1 (IR): ");
       Serial.print(infrared);
-      Serial.print("\tDerived Visible: ");
+      Serial.print("\tVisible light: ");
       Serial.println(visible_only);
     } else {
       Serial.println("Failed to read data from LTR-329");
@@ -193,10 +193,10 @@ void loop() {
 
     while (!dataSent && retryCount < maxRetries) {
       if (Firebase.RTDB.pushJSON(&fbdata, historyPath, &json)) {
-        Serial.println("Historical sensor data pushed to Firebase.");
+        Serial.println("Sensor data pushed to Firebase.");
         dataSent = true;
       } else {
-        Serial.printf("Failed to push historical data (attempt %d/%d): %s\n", 
+        Serial.printf("Failed to push sensor data (attempt %d/%d): %s\n", 
           retryCount + 1, maxRetries, fbdata.errorReason().c_str());
         retryCount++;
         delay(1000);
