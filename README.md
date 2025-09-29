@@ -1,14 +1,11 @@
 # iot-greenhouse-controller
 
-Project for ACIT4015 Internet of Things at OsloMet.
-
-This repository contains a prototype system designed to help hobby gardeners monitor and maintain optimal conditions in a personal greenhouse. It integrates sensor data collection on an ESP32 microcontroller with a cross platform mobile application built using React Native. The mobile app displays real-time and historical environmental data, enabling users to keep track of temperature, humidity, and light levels in their greenhouse.
-
-The project runs from March 3 to April 25, 2025.  
+This repository contains a prototype system designed to help hobby gardeners monitor and maintain optimal conditions in a personal greenhouse. It integrates sensor data collection on an ESP32 microcontroller with a cross-platform mobile application built using React Native. The mobile app displays real-time and historical environmental data, enabling users to keep track of temperature, humidity, and light levels in their greenhouse.
 <br/>
 
 ## Project Overview
-This project is developed as part of the ACIT4015 Internet of Things course, where students are encouraged to propose and implement an IoT project aligned with their masters study program. My study program is Universal Design of ICT, so a key focus is on accessibility and inclusive design in the mobile application interface.  
+Managing a greenhouse requires constant monitoring of environmental conditions to ensure healthy plant growth. This project demonstrates how IoT technology can support hobby gardeners by providing real-time monitoring, historical analysis, and simulated automation features.  
+An additional focus of the project is on accessibility and universal design to ensure that the mobile application can be used by as many people as possible, including those with disabilities. 
 <br/>
 
 ## What Is It?
