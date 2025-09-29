@@ -2,6 +2,11 @@ import React, { useState } from "react";
 import { Dimensions, View, StyleSheet } from "react-native";
 import { MD3Theme, SegmentedButtons, Text, useTheme } from "react-native-paper";
 import { LineChart } from "react-native-chart-kit";
+import { contrastText } from "../utilities/contrastText";
+import { filterByRange } from "../utilities/filterByTimeRange";
+import { formatTimestamp } from "../utilities/formatTimestamp";
+import { getSummaryStats } from "../utilities/getSummaryStats";
+import { shift } from "../utilities/shiftHexColor";
 
 
 export interface HistoryRecord {
@@ -175,70 +180,6 @@ export default function SensorChart({
     </View>
   );
 }
-
-// Filter by time range
-function filterByRange(records: HistoryRecord[], range: "24h" | "7d") {
-  const now = Math.floor(Date.now() / 1000);
-  let cutoff = now - 24 * 3600;
-  if (range === "7d") {
-    cutoff = now - 7 * 24 * 3600;
-  }
-  return records.filter((r) => r.timestamp >= cutoff);
-}
-
-// Format timestamps differently for 24h vs 7d
-function formatTimestamp(ts: number, range: "24h" | "7d") {
-  const date = new Date(ts * 1000);
-  if (range === "24h") {
-    // e.g. "14:45"
-    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-  } else {
-    // e.g. "Mon", or "Mar 30"
-    return date.toLocaleDateString([], { weekday: "long" });
-  }
-}
-
-// Compute min, max, average for textual summary
-function getSummaryStats(data: number[]) {
-  if (data.length === 0) {
-    return { min: null, max: null, avg: null };
-  }
-  const min = Math.min(...data);
-  const max = Math.max(...data);
-  const sum = data.reduce((acc, val) => acc + val, 0);
-  const avg = sum / data.length;
-  return { min, max, avg };
-}
-
-// Darken or lighten a hex colour by `percent` (‑100 ➜ black, 100 ➜ white)
-function shift(hex: string, percent: number) {
-  const num = parseInt(hex.replace('#', ''), 16);
-  const amt = Math.round(2.55 * percent);
-  const r = (num >> 16) + amt;
-  const g = ((num >> 8) & 0xff) + amt;
-  const b = (num & 0xff) + amt;
-  return (
-    '#' +
-    (0x1000000 +
-      (r < 255 ? (r < 1 ? 0 : r) : 255) * 0x10000 +
-      (g < 255 ? (g < 1 ? 0 : g) : 255) * 0x100 +
-      (b < 255 ? (b < 1 ? 0 : b) : 255))
-      .toString(16)
-      .slice(1)
-  );
-}
-
-// Black text on light background and white text on dark background
-function contrastText(hex: string) {
-  const c = hex.replace("#", "");
-  const r = parseInt(c.substr(0, 2), 16);
-  const g = parseInt(c.substr(2, 2), 16);
-  const b = parseInt(c.substr(4, 2), 16);
-  
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  return luminance > 0.5 ? "#000" : "#fff"; // light background → black text
-}
-
 
 
 const styles = StyleSheet.create({

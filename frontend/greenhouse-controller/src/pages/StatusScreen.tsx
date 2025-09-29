@@ -9,6 +9,7 @@ import { NavigationProp, useNavigation } from "@react-navigation/native";
 import { RootStackParamList } from "../routes/Routes";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useNotificationsContext } from "../context/NotificationsContext";
+import { contrastText } from "../utilities/contrastText";
 
 export default function StatusScreen() {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
@@ -314,17 +315,6 @@ const SENSOR_COLORS = {
   humidity: "#00ddff",
   light: "#FFFFFF", 
 };
-
-// Returns black for light backgrounds, white for dark
-function contrastText(hex: string) {
-  const c = hex.replace('#', '');
-  const r = parseInt(c.substr(0, 2), 16);
-  const g = parseInt(c.substr(2, 2), 16);
-  const b = parseInt(c.substr(4, 2), 16);
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  return luminance > 0.5 ? '#000' : '#fff';
-}
-
 
 
 const styles = StyleSheet.create({
